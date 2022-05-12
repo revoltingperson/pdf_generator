@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>active-zoom.png</file>
+    <file>icons8-text-64.png</file>
+    <file>icons8-transform-64.png</file>
+    <file>icons8-zoom-64.png</file>
+  </qresource>
+</RCC>

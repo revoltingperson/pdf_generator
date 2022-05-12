@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>687</width>
-    <height>578</height>
+    <width>788</width>
+    <height>679</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -81,7 +81,7 @@
           <number>3</number>
          </property>
          <property name="sizeAdjustPolicy">
-          <enum>QAbstractScrollArea::AdjustIgnored</enum>
+          <enum>QAbstractScrollArea::AdjustToContents</enum>
          </property>
          <property name="sceneRect">
           <rectf>
@@ -90,6 +90,9 @@
            <width>0.000000000000000</width>
            <height>0.000000000000000</height>
           </rectf>
+         </property>
+         <property name="dragMode">
+          <enum>QGraphicsView::NoDrag</enum>
          </property>
          <property name="resizeAnchor">
           <enum>QGraphicsView::AnchorUnderMouse</enum>
@@ -107,7 +110,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>687</width>
+     <width>788</width>
      <height>22</height>
     </rect>
    </property>
@@ -126,9 +129,18 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
         </color>
        </brush>
       </colorrole>
@@ -146,9 +158,18 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
         </color>
        </brush>
       </colorrole>
@@ -157,18 +178,27 @@
       <colorrole role="Base">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
         </color>
        </brush>
       </colorrole>
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>222</red>
+         <green>221</green>
+         <blue>218</blue>
         </color>
        </brush>
       </colorrole>
@@ -207,9 +237,18 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
         </color>
        </brush>
       </colorrole>
@@ -227,9 +266,18 @@
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
         </color>
        </brush>
       </colorrole>
@@ -238,18 +286,27 @@
       <colorrole role="Base">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
         </color>
        </brush>
       </colorrole>
       <colorrole role="Window">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>119</red>
-         <green>118</green>
-         <blue>123</blue>
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </colorrole>
+      <colorrole role="Shadow">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
         </color>
        </brush>
       </colorrole>
@@ -271,6 +328,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="Zoom_In_Out"/>
   </widget>
   <action name="actionOpen_image">
    <property name="text">
@@ -297,7 +355,27 @@
     <string>Undo</string>
    </property>
   </action>
+  <action name="Zoom_In_Out">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-zoom-64.png</normaloff>:/icons/icons8-zoom-64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom In: Right Click,  Zoom out: Left Click</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../icons/new.qrc"/>
+ </resources>
  <connections/>
 </ui>

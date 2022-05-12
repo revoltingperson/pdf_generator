@@ -1,8 +1,9 @@
-from interface import *
-from PyQt5.QtGui import QPixmap
+from python_files.interface.interface import *
 import os
-from PyQt5.QtWidgets import QAction, QFileDialog
-from calculations import Model
+from PyQt5.QtWidgets import QFileDialog, QWidget
+
+from python_files.model.calculations import Model
+from zoom_controller import ZoomInOut
 
 
 class Controller:
@@ -19,6 +20,9 @@ class Controller:
         """file_name gives back a list"""
         if file_name:
             self.interface.load_image_to_canvas(file_name[0])
+
+    def activate_zoom_action(self):
+        ZoomInOut(self.interface)
 
 
 if __name__ == '__main__':
