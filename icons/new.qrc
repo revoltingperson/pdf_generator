@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="icons">
+    <file>zoom_in.png</file>
+    <file>zoom_out.png</file>
+    <file>icons8-printer-64.png</file>
     <file>active-zoom.png</file>
     <file>icons8-text-64.png</file>
     <file>icons8-transform-64.png</file>

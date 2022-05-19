@@ -26,6 +26,9 @@
    <property name="mouseTracking">
     <bool>true</bool>
    </property>
+   <property name="acceptDrops">
+    <bool>false</bool>
+   </property>
    <property name="styleSheet">
     <string notr="true">background-color: rgb(36, 31, 49);</string>
    </property>
@@ -282,8 +285,9 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="Zoom_In"/>
+   <addaction name="Zoom_Out"/>
    <addaction name="Add_Text"/>
-   <addaction name="Zoom_In_Out"/>
    <addaction name="Print"/>
   </widget>
   <action name="actionOpen_image">
@@ -309,24 +313,6 @@
   <action name="actionUndo">
    <property name="text">
     <string>Undo</string>
-   </property>
-  </action>
-  <action name="Zoom_In_Out">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../icons/new.qrc">
-     <normaloff>:/icons/icons8-zoom-64.png</normaloff>:/icons/icons8-zoom-64.png</iconset>
-   </property>
-   <property name="text">
-    <string>Zoom In Out</string>
-   </property>
-   <property name="toolTip">
-    <string>Zoom In: Right Click,  Zoom out: Left Click</string>
    </property>
   </action>
   <action name="Save_file">
@@ -358,6 +344,24 @@
    </property>
    <property name="text">
     <string>Add Text</string>
+   </property>
+  </action>
+  <action name="Zoom_In">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/zoom_in.png</normaloff>:/icons/zoom_in.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom_In</string>
+   </property>
+  </action>
+  <action name="Zoom_Out">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/zoom_out.png</normaloff>:/icons/zoom_out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom_Out</string>
    </property>
   </action>
  </widget>

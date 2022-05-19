@@ -3,7 +3,9 @@ from PyQt5.QtCore import Qt, QEvent, QSize, QRectF, QMarginsF, QMargins, QObject
 from PyQt5.QtGui import QPixmap, QMouseEvent, QTransform, QPainter, QImage, QBrush, QColor, QPen, QPagedPaintDevice, \
     QKeyEvent
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog, QPrintDialog
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QSizePolicy, QGraphicsSceneMouseEvent, QGraphicsRectItem
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QSizePolicy, QGraphicsSceneMouseEvent, QGraphicsRectItem, \
+    QPushButton
+
 
 class MainCanvas(QGraphicsScene):
     XY_ZERO = 0
@@ -25,7 +27,14 @@ class MainCanvas(QGraphicsScene):
         pen = QPen(Qt.SolidLine)
         brush = QBrush(QColor(rgb_white, rgb_white, rgb_white, rgb_white))
         rect_item = QRectF(self.XY_ZERO, self.XY_ZERO, width, height)
+        # graphRect = QGraphicsRectItem(rect_item)
+        # graphRect.setBrush(brush)
+        # graphRect.setPen(pen)
+        # graphRect.setFlag(QGraphicsRectItem.ItemIsMovable)
+        # graphRect.setFlag(QGraphicsRectItem.ItemIsSelectable)
+        # self.addItem(graphRect)
         self.addRect(rect_item, pen, brush)
+
 
     def save_image_from_canvas(self, where):
         image = QImage(int(self.width()), int(self.height()), QImage.Format_RGB32)
@@ -50,14 +59,23 @@ class MainCanvas(QGraphicsScene):
     def connect_text_labeler(self, text_label_obj):
         self.text_label = text_label_obj
 
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.zoom_control.operate_zoom(event)
-        self.text_label.operate_text_editor(event)
+    def on_button_clicked(self):
+        print('hm')
 
-        print(self.sceneRect())
-        print(event.scenePos().x(), event.scenePos().y())
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        print(event.type())
+        return False
 
 
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        self.zoom_control.operate_zoom(event)
+
+    # def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+    #     self.zoom_control.operate_zoom(event)
+    #     self.text_label.operate_text_editor(event)
+    #     items = self.items(event.scenePos())
+    #     print(self.selectedItems())
+    #     print(event.scenePos().x(), event.scenePos().y())
+    #
+    #
+    # def keyPressEvent(self, event: QKeyEvent) -> None:
+    #     self.zoom_control.operate_zoom(event)
 
