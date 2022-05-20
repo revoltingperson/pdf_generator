@@ -15,7 +15,7 @@ class Interface(QMainWindow):
         self.app = QApplication(sys.argv)
         super().__init__()
         self.controller = controller
-        path = Path.cwd().parent.parent.joinpath('ui', 'interfacev2.ui')
+        path = Path.cwd().parent.parent.joinpath('ui', 'interface_v3.ui')
         uic.loadUi(path, self)
         self.__initialize_all_groups()
 

@@ -61,22 +61,4 @@ class MainCanvas(QGraphicsScene):
         print(f'{self.sceneRect()}:SCENE SIZE \n{self.view_widget.geometry()}: VIEW SIZE')
 
 
-    def connect_zoom_control(self, zoom_obj):
-        self.zoom_control = zoom_obj
 
-    def connect_text_labeler(self, text_label_obj):
-        self.text_label = text_label_obj
-
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        items = self.items(event.scenePos())
-        print(f'items: {items} on scene at {event.scenePos()}')
-
-        if ControllerStateHolder.any_active():
-            self.zoom_control.operate_zoom(event)
-            self.text_label.operate_text_editor(event)
-            print(self.selectedItems())
-        else:
-            return super(MainCanvas, self).mousePressEvent(event)
-
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        self.zoom_control.operate_zoom(event)
