@@ -7,10 +7,10 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QGraphicsView, \
     QDesktopWidget, QFrame
 
+from python_files.interface.main_view import MainView
+
 
 class Interface(QMainWindow):
-    view_widget: QGraphicsView
-
     def __init__(self, controller: Controller):
         self.app = QApplication(sys.argv)
         super().__init__()
@@ -47,10 +47,9 @@ class Interface(QMainWindow):
         add_text.triggered.connect(self.controller.tool_bar_actions)
 
     def __set_working_background_to_work_with_graphics(self):
-        wid = self.findChild(QGraphicsView, 'backgroundView')
-        scene = MainCanvas(wid)
-        self.view_widget = wid
-        self.scene = scene
+
+        self.view_widget = MainView(self)
+        self.scene = MainCanvas(self.view_widget)
 
     def __place_app_window_at_screencenter(self):
         desktop = QDesktopWidget().screenGeometry()

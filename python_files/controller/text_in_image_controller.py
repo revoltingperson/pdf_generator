@@ -28,15 +28,15 @@ class TextItem(CheckedControllers):
 
     #
     def operate_text_editor(self, event):
-        items = self.interface.scene.items(event.scenePos())
+        items = self.interface.scene.items(event.pos())
         if self.editor_active:
-            position = event.scenePos()
+            position = event.pos()
             item = ClickableItem(position)
-            inputs = InputFields()
-            inputs.setGeometry(int(event.scenePos().x()), int(event.scenePos().y()), 80, 35)
-            proxy = self.interface.scene.addWidget(inputs)
-            proxy.setFlag(QGraphicsItem.ItemIsSelectable)
-            proxy.setFlag(QGraphicsItem.ItemIsMovable)
+            # inputs = InputFields()
+            # inputs.setGeometry(int(event.scenePos().x()), int(event.scenePos().y()), 80, 35)
+            # proxy = self.interface.scene.addWidget(inputs)
+            # proxy.setFlag(QGraphicsItem.ItemIsSelectable)
+            # proxy.setFlag(QGraphicsItem.ItemIsMovable)
             self.interface.scene.addItem(item)
 
 
@@ -50,7 +50,14 @@ class ClickableItem(QGraphicsItem):
         self.height = 35
         self.times = 0
         self.rect_alt = QtCore.QRectF(self.pos_x, self.pos_y, self.width+10, self.height+10)
+        self.experimental()
         self.interaction_rules()
+
+    def experimental(self):
+        content = QGraphicsProxyWidget(self)
+        self.title = QTextEdit()
+        self.title.setGeometry(self.pos_x, self.pos_y, self.width, self.height)
+        content.setWidget(self.title)
 
     def interaction_rules(self):
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
@@ -92,17 +99,17 @@ class ClickableItem(QGraphicsItem):
         # content.setWidget(self.input_field)
 
 
-class InputFields(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.text_edit = QTextEdit('Add text')
-        self.__initialize_ui()
-
-    def __initialize_ui(self):
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.addWidget(self.text_edit)
-
+# class InputFields(QWidget):
+#     def __init__(self):
+#         super().__init__()
+#         self.text_edit = QTextEdit('Add text')
+#         self.__initialize_ui()
+#
+#     def __initialize_ui(self):
+#         self.layout = QVBoxLayout()
+#         self.layout.setContentsMargins(0, 0, 0, 0)
+#         self.layout.addWidget(self.text_edit)
+#
 
 
 

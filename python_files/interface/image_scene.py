@@ -50,7 +50,7 @@ class MainCanvas(QGraphicsScene):
         width, height = pix_mapped.width(), pix_mapped.height()
         # add border to working area
         pen = QPen(Qt.SolidLine)
-        pen.setWidth(2)
+        pen.setWidth(1)
         pen.setColor(Qt.white)
         brush = QBrush(Qt.NoBrush)
         rect_item = QRectF(self.XY_ZERO-1, self.XY_ZERO-1, width+2, height+2)
