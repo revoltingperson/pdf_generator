@@ -1,22 +1,21 @@
-from PyQt5.QtWidgets import QAction, QGraphicsItem, QGraphicsSceneMouseEvent
-from PyQt5 import QtGui
 from PyQt5 import QtCore
-from python_files.interface.interface import Interface
-from collection_of_controllers import ControllerStateHolder
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import *
+from checked_builder import CheckedControllers
 
 
-class TextItem:
-    def __init__(self, interface: Interface):
+class TextItem(CheckedControllers):
+    def __init__(self, interface):
         super().__init__()
-        self.last_active = False
-        ControllerStateHolder.controllers.append(self)
+        from python_files.interface.interface import Interface
 
-        self.interface = interface
-        self.scene = self.interface.scene
+        self.interface: Interface = interface
         self.editor_active = False
-        self.button: QAction = self.interface.findChild(QAction, 'Add_Text')
-        item = ClickableItem()
-        self.scene.addItem(item)
+        self.button: QAction = interface.findChild(QAction, 'Add_Text')
+        # position = QtCore.QPointF(10.0, 20.0)
+        # i = ClickableItem(position)
+        # self.scene.addItem(i)
 
     def activate(self):
         self.editor_active = True
@@ -29,31 +28,35 @@ class TextItem:
 
     #
     def operate_text_editor(self, event):
-        items = self.scene.items(event.scenePos())
+        items = self.interface.scene.items(event.scenePos())
         if self.editor_active:
             position = event.scenePos()
             item = ClickableItem(position)
-            self.scene.addItem(item)
-        if items and isinstance(items[0], ClickableItem):
-            QGraphicsItem.mousePressEvent(items[0], event)
+            inputs = InputFields()
+            inputs.setGeometry(int(event.scenePos().x()), int(event.scenePos().y()), 80, 35)
+            proxy = self.interface.scene.addWidget(inputs)
+            proxy.setFlag(QGraphicsItem.ItemIsSelectable)
+            proxy.setFlag(QGraphicsItem.ItemIsMovable)
+            self.interface.scene.addItem(item)
 
 
 class ClickableItem(QGraphicsItem):
-    # def __init__(self, position):
-    def __init__(self):
+    def __init__(self, position):
         super().__init__()
-        # self.pos_x = int(position.x())
-        # self.pos_y = int(position.y())
-        self.pos_x = 20
-        self.pos_y = 20
+        self.pos_x = int(position.x())
+        self.pos_y = int(position.y())
+        # self.input_field = InputFields()
         self.width = 80
         self.height = 35
+        self.times = 0
+        self.rect_alt = QtCore.QRectF(self.pos_x, self.pos_y, self.width+10, self.height+10)
         self.interaction_rules()
 
-
     def interaction_rules(self):
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setAcceptedMouseButtons(Qt.LeftButton)
+
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(self.pos_x, self.pos_y, self.width, self.height).normalized()
@@ -64,9 +67,42 @@ class ClickableItem(QGraphicsItem):
         outline.setColor(QtCore.Qt.darkGray)
         painter.setPen(outline)
         painter.setBrush(QtCore.Qt.NoBrush)
-        painter.drawRect(self.pos_x, self.pos_y, self.width, self.height)
+        rect_def = QtCore.QRectF(self.pos_x, self.pos_y, self.width, self.height)
+        painter.drawRect(rect_def)
 
-    # def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-    #     print('h')
+        # if self.times == 0:
+        #     painter.drawRect(rect_def)
+        #     self.times += 1
+
+
+    def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+        item = self.boundingRect()
+        print(f'bound rect {item}')
+        print(self.isSelected())
+        self.setCursor(Qt.ClosedHandCursor)
+
+
+    def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+        self.setCursor(Qt.ArrowCursor)
+        super(ClickableItem, self).mouseReleaseEvent(event)
+
+    # def initialize_input(self):
+    #     content = QGraphicsProxyWidget(self)
+    #     self.input_field.setGeometry(self.pos_x, self.pos_y, self.width, self.height)
+        # content.setWidget(self.input_field)
+
+
+class InputFields(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.text_edit = QTextEdit('Add text')
+        self.__initialize_ui()
+
+    def __initialize_ui(self):
+        self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addWidget(self.text_edit)
+
+
 
 

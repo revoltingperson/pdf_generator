@@ -1,10 +1,14 @@
+from python_files.controller.main_controller import *
 from PIL import Image
 from PyQt5.QtCore import Qt, QEvent, QSize, QRectF, QMarginsF, QMargins, QObject
 from PyQt5.QtGui import QPixmap, QMouseEvent, QTransform, QPainter, QImage, QBrush, QColor, QPen, QPagedPaintDevice, \
     QKeyEvent
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog, QPrintDialog
+
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QSizePolicy, QGraphicsSceneMouseEvent, QGraphicsRectItem, \
-    QPushButton
+    QPushButton, QGraphicsItem
+
+from python_files.controller.text_in_image_controller import ClickableItem
 
 
 class MainCanvas(QGraphicsScene):
@@ -17,7 +21,7 @@ class MainCanvas(QGraphicsScene):
         self.view_widget = graphics_view
         self.view_widget.setScene(self)
         self.image = QPixmap()
-        self.installEventFilter(self)
+        self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.__set_placeholder_rectangle()
 
     def __set_placeholder_rectangle(self):
@@ -27,14 +31,8 @@ class MainCanvas(QGraphicsScene):
         pen = QPen(Qt.SolidLine)
         brush = QBrush(QColor(rgb_white, rgb_white, rgb_white, rgb_white))
         rect_item = QRectF(self.XY_ZERO, self.XY_ZERO, width, height)
-        # graphRect = QGraphicsRectItem(rect_item)
-        # graphRect.setBrush(brush)
-        # graphRect.setPen(pen)
-        # graphRect.setFlag(QGraphicsRectItem.ItemIsMovable)
-        # graphRect.setFlag(QGraphicsRectItem.ItemIsSelectable)
-        # self.addItem(graphRect)
+        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         self.addRect(rect_item, pen, brush)
-
 
     def save_image_from_canvas(self, where):
         image = QImage(int(self.width()), int(self.height()), QImage.Format_RGB32)
@@ -49,9 +47,19 @@ class MainCanvas(QGraphicsScene):
         if not self.image.isNull():
             self.clear()
 
+        width, height = pix_mapped.width(), pix_mapped.height()
+        # add border to working area
+        pen = QPen(Qt.SolidLine)
+        pen.setWidth(2)
+        pen.setColor(Qt.white)
+        brush = QBrush(Qt.NoBrush)
+        rect_item = QRectF(self.XY_ZERO-1, self.XY_ZERO-1, width+2, height+2)
+
+        self.addRect(rect_item, pen, brush)
         self.addPixmap(pix_mapped)
-        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pix_mapped.width(), pix_mapped.height())
+        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         print(f'{self.sceneRect()}:SCENE SIZE \n{self.view_widget.geometry()}: VIEW SIZE')
+
 
     def connect_zoom_control(self, zoom_obj):
         self.zoom_control = zoom_obj
@@ -59,23 +67,16 @@ class MainCanvas(QGraphicsScene):
     def connect_text_labeler(self, text_label_obj):
         self.text_label = text_label_obj
 
-    def on_button_clicked(self):
-        print('hm')
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        items = self.items(event.scenePos())
+        print(f'items: {items} on scene at {event.scenePos()}')
 
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        print(event.type())
-        return False
+        if ControllerStateHolder.any_active():
+            self.zoom_control.operate_zoom(event)
+            self.text_label.operate_text_editor(event)
+            print(self.selectedItems())
+        else:
+            return super(MainCanvas, self).mousePressEvent(event)
 
-
-
-    # def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-    #     self.zoom_control.operate_zoom(event)
-    #     self.text_label.operate_text_editor(event)
-    #     items = self.items(event.scenePos())
-    #     print(self.selectedItems())
-    #     print(event.scenePos().x(), event.scenePos().y())
-    #
-    #
-    # def keyPressEvent(self, event: QKeyEvent) -> None:
-    #     self.zoom_control.operate_zoom(event)
-
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        self.zoom_control.operate_zoom(event)

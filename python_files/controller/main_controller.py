@@ -25,6 +25,7 @@ class Controller:
 
         self.zoom_control = ZoomEnableDisable(self.interface)
         self.interface.scene.connect_zoom_control(self.zoom_control)
+
         self.text_to_image = TextItem(self.interface)
         self.interface.scene.connect_text_labeler(self.text_to_image)
 
@@ -67,7 +68,8 @@ class Controller:
         image_file, _ = dialog.getSaveFileName(self.interface, 'Save Image', '',
                                                "Image Files(*.png *.jpg *.bmp *.raw *.jpeg)")
         allowed = ['.png', '.jpg', '.bmp', '.raw', '.jpeg']
-        if image_file and not self.interface.scene.image.isNull():
+        if image_file:
+            # and not self.interface.scene.image.isNull()
             if all([not image_file.endswith(ending) for ending in allowed]):
                 image_file = image_file + (allowed[0])
             self.interface.scene.save_image_from_canvas(image_file)

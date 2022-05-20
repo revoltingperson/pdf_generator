@@ -285,8 +285,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="Zoom_In"/>
-   <addaction name="Zoom_Out"/>
+   <addaction name="Zoom_In_Out"/>
    <addaction name="Add_Text"/>
    <addaction name="Print"/>
   </widget>
@@ -347,6 +346,9 @@
    </property>
   </action>
   <action name="Zoom_In">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/zoom_in.png</normaloff>:/icons/zoom_in.png</iconset>
@@ -356,12 +358,27 @@
    </property>
   </action>
   <action name="Zoom_Out">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/zoom_out.png</normaloff>:/icons/zoom_out.png</iconset>
    </property>
    <property name="text">
     <string>Zoom_Out</string>
+   </property>
+  </action>
+  <action name="Zoom_In_Out">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-zoom-64.png</normaloff>:/icons/icons8-zoom-64.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom_In_Out</string>
    </property>
   </action>
  </widget>

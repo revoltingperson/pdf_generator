@@ -1,16 +1,16 @@
-from icons import new
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QIcon, QPixmap, QCursor, QMouseEvent
+from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtWidgets import QWidget, QAction
+
+from checked_builder import CheckedControllers
 from python_files.interface.interface import Interface
-from collection_of_controllers import ControllerStateHolder
 
 
-class ZoomEnableDisable:
+class ZoomEnableDisable(CheckedControllers):
     def __init__(self, interface: Interface):
-        self.last_active = False
+        super().__init__()
         self.zoom_active = False
-        ControllerStateHolder.controllers.append(self)
 
         self.__zoom_in_factor = 1.3
         self.__zoom = 6
@@ -20,7 +20,7 @@ class ZoomEnableDisable:
 
         self.ui = interface
         self.central_widget: QWidget = self.ui.findChild(QWidget, 'centralwidget')
-        self.button: QAction = self.ui.findChild(QAction, 'Zoom_In')
+        self.button: QAction = self.ui.findChild(QAction, 'Zoom_In_Out')
 
 
     def activate(self):

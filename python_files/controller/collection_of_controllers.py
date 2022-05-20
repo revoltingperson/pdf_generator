@@ -17,3 +17,10 @@ class ControllerStateHolder:
         for controller in ControllerStateHolder.controllers:
             if controller.button.isChecked():
                 controller.activate()
+
+    @staticmethod
+    def any_active() -> bool:
+        for controller in ControllerStateHolder.controllers:
+            if controller.button.isChecked():
+                return True
+        return False

@@ -39,10 +39,8 @@ class Interface(QMainWindow):
 
 
     def __initialize_tool_bar(self):
-        zoom_button_in: QAction = self.findChild(QAction, 'Zoom_In')
-        zoom_button_out: QAction = self.findChild(QAction, 'Zoom_Out')
+        zoom_button_in: QAction = self.findChild(QAction, 'Zoom_In_Out')
         zoom_button_in.triggered.connect(self.controller.tool_bar_actions)
-        zoom_button_out.triggered.connect(self.controller.tool_bar_actions)
         printer = self.findChild(QAction, 'Print')
         printer.triggered.connect(self.controller.print_file)
         add_text = self.findChild(QAction, 'Add_Text')
