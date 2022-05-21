@@ -30,11 +30,6 @@ class TextItem(CheckedControllers):
         items = self.interface.scene.items(position)
         if self.editor_active:
             item = ClickableItem(position)
-            # inputs = InputFields()
-            # inputs.setGeometry(int(event.scenePos().x()), int(event.scenePos().y()), 80, 35)
-            # proxy = self.interface.scene.addWidget(inputs)
-            # proxy.setFlag(QGraphicsItem.ItemIsSelectable)
-            # proxy.setFlag(QGraphicsItem.ItemIsMovable)
             self.interface.scene.addItem(item)
 
 
