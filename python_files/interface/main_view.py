@@ -25,16 +25,15 @@ class MainView(QGraphicsView):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         self.zoom_control.operate_zoom(event)
-        self.text_item.operate_text_editor(event)
-        print(f'{event.button()}, {event.x(), event.y()}')
+        # self.text_item.operate_text_editor(event)
+        # print(f'{event.button()}, {event.x(), event.y()}')
         super(MainView, self).mousePressEvent(event)
-
 
     def connect_zoom_controller(self, zoom_obj):
         self.zoom_control: ZoomEnableDisable = zoom_obj
 
-    def connect_text_items(self, text_obj):
-        self.text_item = text_obj
+    # def connect_text_items(self, text_obj):
+    #     self.text_item = text_obj
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         self.zoom_control.operate_zoom(event)

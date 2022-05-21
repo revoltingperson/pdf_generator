@@ -1,6 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import *
 from checked_builder import CheckedControllers
 
@@ -13,9 +14,6 @@ class TextItem(CheckedControllers):
         self.interface: Interface = interface
         self.editor_active = False
         self.button: QAction = interface.findChild(QAction, 'Add_Text')
-        # position = QtCore.QPointF(10.0, 20.0)
-        # i = ClickableItem(position)
-        # self.scene.addItem(i)
 
     def activate(self):
         self.editor_active = True
@@ -28,9 +26,9 @@ class TextItem(CheckedControllers):
 
     #
     def operate_text_editor(self, event):
-        items = self.interface.scene.items(event.pos())
+        position = event.scenePos()
+        items = self.interface.scene.items(position)
         if self.editor_active:
-            position = event.pos()
             item = ClickableItem(position)
             # inputs = InputFields()
             # inputs.setGeometry(int(event.scenePos().x()), int(event.scenePos().y()), 80, 35)
@@ -45,19 +43,17 @@ class ClickableItem(QGraphicsItem):
         super().__init__()
         self.pos_x = int(position.x())
         self.pos_y = int(position.y())
-        # self.input_field = InputFields()
-        self.width = 80
+        self.input_field = InputFields()
+        self.width = 90
         self.height = 35
         self.times = 0
-        self.rect_alt = QtCore.QRectF(self.pos_x, self.pos_y, self.width+10, self.height+10)
+        # self.rect_alt = QtCore.QRectF(self.pos_x, self.pos_y, self.width+10, self.height+10)
         self.experimental()
+        self.initialize_input()
         self.interaction_rules()
 
     def experimental(self):
-        content = QGraphicsProxyWidget(self)
-        self.title = QTextEdit()
-        self.title.setGeometry(self.pos_x, self.pos_y, self.width, self.height)
-        content.setWidget(self.title)
+        pass
 
     def interaction_rules(self):
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
@@ -66,7 +62,7 @@ class ClickableItem(QGraphicsItem):
 
 
     def boundingRect(self) -> QtCore.QRectF:
-        return QtCore.QRectF(self.pos_x, self.pos_y, self.width, self.height).normalized()
+        return QtCore.QRectF(self.pos_x-5, self.pos_y-5, self.width+5, self.height+5).normalized()
 
     def paint(self, painter: QtGui.QPainter, QStyleOptionGraphicsItem, widget=None) -> None:
         outline = QtGui.QPen(QtCore.Qt.DotLine)
@@ -93,23 +89,31 @@ class ClickableItem(QGraphicsItem):
         self.setCursor(Qt.ArrowCursor)
         super(ClickableItem, self).mouseReleaseEvent(event)
 
-    # def initialize_input(self):
-    #     content = QGraphicsProxyWidget(self)
-    #     self.input_field.setGeometry(self.pos_x, self.pos_y, self.width, self.height)
-        # content.setWidget(self.input_field)
+    def initialize_input(self):
+        content = QGraphicsProxyWidget(self)
+        self.input_field.setMinimumSize(self.width//2, self.height)
+        self.input_field.setGeometry(self.pos_x, self.pos_y, self.width - 20, self.height)
+        content.setWidget(self.input_field)
 
 
-# class InputFields(QWidget):
-#     def __init__(self):
-#         super().__init__()
-#         self.text_edit = QTextEdit('Add text')
-#         self.__initialize_ui()
-#
-#     def __initialize_ui(self):
-#         self.layout = QVBoxLayout()
-#         self.layout.setContentsMargins(0, 0, 0, 0)
-#         self.layout.addWidget(self.text_edit)
-#
+class InputFields(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.text_edit = QTextEdit('Add text')
+        self.__initialize_ui()
+
+    def __initialize_ui(self):
+        self.painter = QStylePainter()
+        self.layout = QVBoxLayout()
+        style = """
+            background-color: transparent;
+        """
+        self.setStyleSheet(style)
+
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 2, 0, 0)
+        self.layout.addWidget(self.text_edit)
+
 
 
 

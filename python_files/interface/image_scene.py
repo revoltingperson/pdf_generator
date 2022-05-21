@@ -12,12 +12,14 @@ from python_files.controller.text_in_image_controller import ClickableItem
 
 
 class MainCanvas(QGraphicsScene):
+    from python_files.controller.text_in_image_controller import TextItem
+    text_item: TextItem
+
     XY_ZERO = 0
 
     def __init__(self, graphics_view: QGraphicsView):
         super().__init__()
-        self.text_label = None
-        self.zoom_control = None
+
         self.view_widget = graphics_view
         self.view_widget.setScene(self)
         self.image = QPixmap()
@@ -59,6 +61,16 @@ class MainCanvas(QGraphicsScene):
         self.addPixmap(pix_mapped)
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         print(f'{self.sceneRect()}:SCENE SIZE \n{self.view_widget.geometry()}: VIEW SIZE')
+
+    def connect_text_items(self, text_obj):
+        self.text_item = text_obj
+
+    def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+        self.text_item.operate_text_editor(event)
+        super(MainCanvas, self).mousePressEvent(event)
+
+
+
 
 
 

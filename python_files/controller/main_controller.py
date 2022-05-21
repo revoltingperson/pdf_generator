@@ -27,7 +27,7 @@ class Controller:
         self.interface.view_widget.connect_zoom_controller(self.zoom_control)
 
         self.text_to_image = TextItem(self.interface)
-        self.interface.view_widget.connect_text_items(self.text_to_image)
+        self.interface.scene.connect_text_items(self.text_to_image)
 
     def tool_bar_actions(self):
         ControllerStateHolder.verify_only_one_active()
