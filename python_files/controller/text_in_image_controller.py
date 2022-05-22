@@ -1,7 +1,5 @@
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QRectF
-from PyQt5.QtGui import QPalette
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QRect
+from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen
 from PyQt5.QtWidgets import *
 from checked_builder import CheckedControllers
 
@@ -24,71 +22,113 @@ class TextItem(CheckedControllers):
         self.last_active = False
         self.button.setChecked(False)
 
-    #
     def operate_text_editor(self, event):
         position = event.scenePos()
         items = self.interface.scene.items(position)
+        # print(f"{len(items)} items at click")
+        # print(f"{len(self.interface.scene.items())} all items at scene")
         if self.editor_active:
             item = ClickableItem(position)
             self.interface.scene.addItem(item)
 
 
-class ClickableItem(QGraphicsItem):
-    def __init__(self, position):
-        super().__init__()
-        self.pos_x = int(position.x())
-        self.pos_y = int(position.y())
+class ClickableItem(QGraphicsRectItem):
+    width_inner = 80
+    height_inner = 35
+
+    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
+        super().__init__(rect)
+        self._initialize_flags()
+        self.setPos(position)
+        self.position = position
+
+        self.resizer = Resizer(parent=self)
+        resizer_width = self.resizer.rect.width() / 2
+        resizer_offset = QPointF(resizer_width, resizer_width)
+        self.resizer.setPos(self.rect().bottomRight() - resizer_offset)
+        self.resizer.resizeSignal[QPointF].connect(lambda change: self.resize(change))
+
         self.input_field = InputFields()
-        self.width = 90
-        self.height = 35
-        self.times = 0
-        # self.rect_alt = QtCore.QRectF(self.pos_x, self.pos_y, self.width+10, self.height+10)
-        self.experimental()
+        self.content = QGraphicsProxyWidget(self)
         self.initialize_input()
-        self.interaction_rules()
 
-    def experimental(self):
-        pass
 
-    def interaction_rules(self):
+    def _initialize_flags(self):
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setAcceptedMouseButtons(Qt.LeftButton)
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
+    def paint(self, painter, option, widget=None):
+        # print(f'{self.isUnderMouse()} mouse hover')
+        # print(f'{self.isSelected()} rect item selected')
+        # print(f'{self.input_field.text_edit.hasFocus()} textedit')
+        if self.isSelected() or self.input_field.text_edit.hasFocus():
+            # draw everything
+            pen = QPen()
+            pen.setColor(Qt.black)
+            self.resizer.show()
+            painter.setPen(pen)
+            painter.setBrush(Qt.transparent)
+            painter.drawRect(self.rect())
+        elif self.resizer.isSelected():
+            # important hack to keep circle visible
+            pen = QPen()
+            pen.setColor(Qt.black)
+            painter.setPen(pen)
+            painter.setBrush(Qt.transparent)
+            painter.drawRect(self.rect())
+        else:
+            self.resizer.hide()
 
-    def boundingRect(self) -> QtCore.QRectF:
-        return QtCore.QRectF(self.pos_x-5, self.pos_y-5, self.width+5, self.height+5).normalized()
-
-    def paint(self, painter: QtGui.QPainter, QStyleOptionGraphicsItem, widget=None) -> None:
-        outline = QtGui.QPen(QtCore.Qt.DotLine)
-        outline.setWidth(2)
-        outline.setColor(QtCore.Qt.darkGray)
-        painter.setPen(outline)
-        painter.setBrush(QtCore.Qt.NoBrush)
-        rect_def = QtCore.QRectF(self.pos_x, self.pos_y, self.width, self.height)
-        painter.drawRect(rect_def)
-
-        # if self.times == 0:
-        #     painter.drawRect(rect_def)
-        #     self.times += 1
-
-
-    def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        item = self.boundingRect()
-        print(f'bound rect {item}')
-        print(self.isSelected())
-        self.setCursor(Qt.ClosedHandCursor)
-
-
-    def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        self.setCursor(Qt.ArrowCursor)
-        super(ClickableItem, self).mouseReleaseEvent(event)
+    @pyqtSlot()
+    def resize(self, change):
+        self.setRect(self.rect().adjusted(0, 0, change.x(), change.y()))
+        self.prepareGeometryChange()
+        self.update()
+        rect: QRectF = self.rect()
+        self.input_field.resize(int(rect.width()), int(rect.height()))
 
     def initialize_input(self):
-        content = QGraphicsProxyWidget(self)
-        self.input_field.setMinimumSize(self.width//2, self.height)
-        self.input_field.setGeometry(self.pos_x, self.pos_y, self.width - 20, self.height)
-        content.setWidget(self.input_field)
+        self.input_field.setMinimumSize(10, 10)
+        self.input_field.setGeometry(0, 0,
+                                     self.width_inner, self.height_inner)
+        self.content.setWidget(self.input_field)
+
+
+class Resizer(QGraphicsObject):
+
+    resizeSignal = pyqtSignal(QPointF)
+
+    def __init__(self, parent, rect=QRectF(0, 0, 10, 10)):
+        print(parent)
+        super().__init__(parent)
+
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+        self.rect = rect
+
+    def boundingRect(self):
+        return self.rect
+
+    def paint(self, painter, option, widget=None):
+        if self.isSelected():
+            pen = QPen()
+            pen.setStyle(Qt.SolidLine)
+            pen.setColor(QColor(237, 123, 24))
+            painter.setPen(pen)
+            painter.setBrush(Qt.Dense3Pattern)
+        painter.setBrush(QColor(59, 47, 38))
+        painter.drawEllipse(self.rect)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange:
+            if self.isSelected():
+                self.resizeSignal[QPointF].emit(value - self.pos())
+
+        return value
 
 
 class InputFields(QWidget):
@@ -108,6 +148,13 @@ class InputFields(QWidget):
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 2, 0, 0)
         self.layout.addWidget(self.text_edit)
+
+
+
+
+
+
+
 
 
 

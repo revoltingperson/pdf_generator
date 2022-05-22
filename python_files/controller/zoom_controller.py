@@ -24,16 +24,16 @@ class ZoomEnableDisable(CheckedControllers):
 
 
     def activate(self):
-        zoom_cursor = QPixmap(":/icons/active-zoom.png")
-        cursor = QCursor(zoom_cursor)
-        self.central_widget.setCursor(cursor)
+        # zoom_cursor = QPixmap(":/icons/active-zoom.png")
+        # cursor = QCursor(zoom_cursor)
+        # self.central_widget.setCursor(cursor)
         self.zoom_active = True
         self.last_active = True
 
     def disable(self):
-        cursor = QCursor()
-        cursor.setShape(Qt.ArrowCursor)
-        self.central_widget.setCursor(cursor)
+        # cursor = QCursor()
+        # cursor.setShape(Qt.ArrowCursor)
+        # self.central_widget.setCursor(cursor)
         self.zoom_active = False
         self.last_active = False
         self.button.setChecked(False)
