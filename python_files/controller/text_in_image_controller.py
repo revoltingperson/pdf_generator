@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QRect
-from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen
+from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen, QTextCursor, QTextCharFormat
 from PyQt5.QtWidgets import *
 from checked_builder import CheckedControllers
 
@@ -25,11 +25,13 @@ class TextItem(CheckedControllers):
     def operate_text_editor(self, event):
         position = event.scenePos()
         items = self.interface.scene.items(position)
-        # print(f"{len(items)} items at click")
+        print(f"{len(items)} items at click")
+        print(items[0].flags())
         # print(f"{len(self.interface.scene.items())} all items at scene")
         if self.editor_active:
             item = ClickableItem(position)
             self.interface.scene.addItem(item)
+            item.input_field.text_edit.font()
 
 
 class ClickableItem(QGraphicsRectItem):
@@ -38,7 +40,13 @@ class ClickableItem(QGraphicsRectItem):
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(rect)
+        self.flag_list = [(QGraphicsItem.ItemIsSelectable, True),
+                          (QGraphicsItem.ItemIsMovable, True),
+                          (QGraphicsItem.ItemIsFocusable, True),
+                          (QGraphicsItem.ItemSendsGeometryChanges, True)
+                          ]
         self._initialize_flags()
+
         self.setPos(position)
         self.position = position
 
@@ -52,12 +60,9 @@ class ClickableItem(QGraphicsRectItem):
         self.content = QGraphicsProxyWidget(self)
         self.initialize_input()
 
-
     def _initialize_flags(self):
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        for flag in self.flag_list:
+            self.setFlag(*flag)
 
     def paint(self, painter, option, widget=None):
         # print(f'{self.isUnderMouse()} mouse hover')
@@ -97,11 +102,9 @@ class ClickableItem(QGraphicsRectItem):
 
 
 class Resizer(QGraphicsObject):
-
     resizeSignal = pyqtSignal(QPointF)
 
     def __init__(self, parent, rect=QRectF(0, 0, 10, 10)):
-        print(parent)
         super().__init__(parent)
 
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
@@ -117,7 +120,8 @@ class Resizer(QGraphicsObject):
         if self.isSelected():
             pen = QPen()
             pen.setStyle(Qt.SolidLine)
-            pen.setColor(QColor(237, 123, 24))
+            # pen.setColor(QColor(237, 123, 24))
+            pen.setColor(QColor("#58a4ff"))
             painter.setPen(pen)
             painter.setBrush(Qt.Dense3Pattern)
         painter.setBrush(QColor(59, 47, 38))
@@ -134,7 +138,7 @@ class Resizer(QGraphicsObject):
 class InputFields(QWidget):
     def __init__(self):
         super().__init__()
-        self.text_edit = QTextEdit('Add text')
+        self.text_edit = TextEdit()
         self.__initialize_ui()
 
     def __initialize_ui(self):
@@ -150,12 +154,37 @@ class InputFields(QWidget):
         self.layout.addWidget(self.text_edit)
 
 
+class TextEdit(QTextEdit):
+    menu_style = """
+        QMenu { background-color: #58a4ff;}
+    """
 
+    def __init__(self):
+        super().__init__()
+        self.setText('Add text')
+        self.font_selection = QAction('Font')
+        self.font_selection.triggered.connect(self.font_dialog)
+        self.color_selection = QAction('Text Color')
+        self.color_selection.triggered.connect(self.color_dialog)
 
+    def contextMenuEvent(self, event):
+        menu: QMenu = self.createStandardContextMenu()
+        menu.setStyleSheet(self.menu_style)
+        menu.addSeparator()
+        menu.addAction(self.font_selection)
+        menu.addAction(self.color_selection)
+        menu.exec(event.globalPos())
+        menu.deleteLater()
 
+    def font_dialog(self):
+        # qfont takes passed string from widget as first argument
+        font, ok = QFontDialog.getFont(self.font(), self)
+        cur: QTextCursor = self.textCursor()
+        if ok:
+            format_obj = QTextCharFormat()
+            format_obj.setFont(font)
+            cur.setCharFormat(format_obj)
 
-
-
-
-
-
+    def color_dialog(self):
+        color = QColorDialog.getColor()
+        self.setTextColor(color)

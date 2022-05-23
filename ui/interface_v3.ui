@@ -374,6 +374,14 @@
     <string>Zoom_In_Out</string>
    </property>
   </action>
+  <action name="Edit_font">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Edit font</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../icons/new.qrc"/>

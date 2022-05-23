@@ -88,9 +88,6 @@ class Controller:
             painter.end()
 
 
-
-
-
 if __name__ == '__main__':
     app = Controller()
     app.main()
