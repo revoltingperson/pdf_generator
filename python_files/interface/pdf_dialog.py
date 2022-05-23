@@ -4,6 +4,7 @@ from pathlib import Path
 from pdf2image import convert_from_path
 import os
 
+
 class PdfOpener(QDialog):
     def __init__(self, pdf_path):
         super().__init__()

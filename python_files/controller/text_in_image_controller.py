@@ -3,30 +3,28 @@ from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen, QTextCursor, Q
 from PyQt5.QtWidgets import *
 from checked_builder import CheckedControllers
 
+debug = False
+
 
 class TextItem(CheckedControllers):
+
     def __init__(self, interface):
-        super().__init__()
-        """TODO:
-        connect signal on click with slots
-        """
+        super().__init__(interface)
         from python_files.interface.interface import Interface
 
         self.interface: Interface = interface
         self.button: QAction = interface.findChild(QAction, 'Add_Text')
 
-
     def operate_text_editor(self, event):
         position = event.scenePos()
         items = self.interface.scene.items(position)
-        print(f"{len(items)} items at click")
-        if items:
-            print(items[0].flags())
-        # print(f"{len(self.interface.scene.items())} all items at scene")
+        if debug:
+            print(f"{len(items)} items at click")
+            print(f"{self.interface.scene.items()} all items at scene")
         if self.button.isChecked():
             item = ClickableItem(position)
+            self.disable()
             self.interface.scene.addItem(item)
-            item.input_field.text_edit.font()
 
 
 class ClickableItem(QGraphicsRectItem):
@@ -35,11 +33,7 @@ class ClickableItem(QGraphicsRectItem):
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(rect)
-        self.flag_list = [(QGraphicsItem.ItemIsSelectable, True),
-                          (QGraphicsItem.ItemIsMovable, True),
-                          (QGraphicsItem.ItemIsFocusable, True),
-                          (QGraphicsItem.ItemSendsGeometryChanges, True)
-                          ]
+
         self._initialize_flags()
 
         self.setPos(position)
@@ -56,8 +50,10 @@ class ClickableItem(QGraphicsRectItem):
         self.initialize_input()
 
     def _initialize_flags(self):
-        for flag in self.flag_list:
-            self.setFlag(*flag)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def paint(self, painter, option, widget=None):
         # print(f'{self.isUnderMouse()} mouse hover')

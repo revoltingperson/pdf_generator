@@ -8,8 +8,6 @@ from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog, QPrintDialog
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QSizePolicy, QGraphicsSceneMouseEvent, QGraphicsRectItem, \
     QPushButton, QGraphicsItem
 
-from python_files.controller.text_in_image_controller import ClickableItem
-
 
 class MainCanvas(QGraphicsScene):
     from python_files.controller.text_in_image_controller import TextItem
@@ -48,6 +46,7 @@ class MainCanvas(QGraphicsScene):
         self.image = pix_mapped
         if not self.image.isNull():
             self.clear()
+
 
         width, height = pix_mapped.width(), pix_mapped.height()
         # add border to working area

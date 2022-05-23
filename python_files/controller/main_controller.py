@@ -2,10 +2,9 @@ import os
 from PyQt5.QtGui import QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import QFileDialog, QWidget, QMessageBox, QDialog
-from pathlib import Path
 from python_files.interface.pdf_dialog import PdfOpener
 from python_files.model.calculations import Model
-from collection_of_controllers import ControllerStateHolder
+from collection_of_controllers import CntrsHolder
 
 
 class Controller:
@@ -30,7 +29,7 @@ class Controller:
         self.interface.scene.connect_text_items(self.text_to_image)
 
     def tool_bar_actions(self):
-        ControllerStateHolder.verify_only_one_active()
+        CntrsHolder.verify_only_one_active()
 
     def open_new_image(self):
         """file_name gives back a list"""
