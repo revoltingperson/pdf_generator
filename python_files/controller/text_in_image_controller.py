@@ -7,28 +7,23 @@ from checked_builder import CheckedControllers
 class TextItem(CheckedControllers):
     def __init__(self, interface):
         super().__init__()
+        """TODO:
+        connect signal on click with slots
+        """
         from python_files.interface.interface import Interface
 
         self.interface: Interface = interface
-        self.editor_active = False
         self.button: QAction = interface.findChild(QAction, 'Add_Text')
 
-    def activate(self):
-        self.editor_active = True
-        self.last_active = True
-
-    def disable(self):
-        self.editor_active = False
-        self.last_active = False
-        self.button.setChecked(False)
 
     def operate_text_editor(self, event):
         position = event.scenePos()
         items = self.interface.scene.items(position)
         print(f"{len(items)} items at click")
-        print(items[0].flags())
+        if items:
+            print(items[0].flags())
         # print(f"{len(self.interface.scene.items())} all items at scene")
-        if self.editor_active:
+        if self.button.isChecked():
             item = ClickableItem(position)
             self.interface.scene.addItem(item)
             item.input_field.text_edit.font()

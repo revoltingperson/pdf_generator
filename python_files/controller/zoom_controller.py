@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtWidgets import QWidget, QAction
-
 from checked_builder import CheckedControllers
 
 
@@ -10,8 +9,6 @@ class ZoomEnableDisable(CheckedControllers):
     def __init__(self, interface):
         from python_files.interface.interface import Interface
         super().__init__()
-        self.zoom_active = False
-
         self.__zoom_in_factor = 1.3
         self.__zoom = 6
         self.__zoom_step = 1
@@ -23,30 +20,15 @@ class ZoomEnableDisable(CheckedControllers):
         self.button: QAction = self.ui.findChild(QAction, 'Zoom_In_Out')
 
 
-    def activate(self):
-        # zoom_cursor = QPixmap(":/icons/active-zoom.png")
-        # cursor = QCursor(zoom_cursor)
-        # self.central_widget.setCursor(cursor)
-        self.zoom_active = True
-        self.last_active = True
-
-    def disable(self):
-        # cursor = QCursor()
-        # cursor.setShape(Qt.ArrowCursor)
-        # self.central_widget.setCursor(cursor)
-        self.zoom_active = False
-        self.last_active = False
-        self.button.setChecked(False)
-
     def operate_zoom(self, event):
-        if self.zoom_active and hasattr(event, 'button'):
+        if self.button.isChecked() and hasattr(event, 'button'):
             if event.button() == Qt.LeftButton:
                 self.__zoom_in()
             elif event.button() == Qt.RightButton:
                 self.__zoom_out()
         elif hasattr(event, 'angleDelta'):
             self.__wheel_zoom(event)
-        elif self.zoom_active and event.key() == Qt.Key_Escape:
+        elif self.button.isChecked() and event.key() == Qt.Key_Escape:
             self.disable()
 
     def __zoom_in(self):
