@@ -1,3 +1,5 @@
+from PyQt5.QtGui import QCloseEvent
+
 from icons import new
 from python_files.controller.main_controller import *
 from python_files.interface.image_scene import *
@@ -37,14 +39,21 @@ class Interface(QMainWindow):
         pdf_open = self.findChild(QAction, 'Open_PDF')
         pdf_open.triggered.connect(self.controller.open_pdf_file)
 
-
     def __initialize_tool_bar(self):
         zoom_button_in: QAction = self.findChild(QAction, 'Zoom_In_Out')
-        zoom_button_in.triggered.connect(self.controller.tool_bar_actions)
+        zoom_button_in.triggered.connect(self.controller.tool_bar_checked_buttons)
         printer = self.findChild(QAction, 'Print')
         printer.triggered.connect(self.controller.print_file)
         add_text = self.findChild(QAction, 'Add_Text')
-        add_text.triggered.connect(self.controller.tool_bar_actions)
+        add_text.triggered.connect(self.controller.tool_bar_checked_buttons)
+        rotate_right = self.findChild(QAction, 'Rotate_right')
+        rotate_right.triggered.connect(self.controller.rotate_right)
+        rotate_left = self.findChild(QAction, 'Rotate_left')
+        rotate_left.triggered.connect(self.controller.rotate_left)
+        flip_horizontally = self.findChild(QAction, 'Flip_horizontally')
+        flip_horizontally.triggered.connect(self.controller.flip_horizontally)
+        flip_vertically = self.findChild(QAction, 'Flip_vertically')
+        flip_vertically.triggered.connect(self.controller.flip_vertically)
 
     def __set_working_background_to_work_with_graphics(self):
 
@@ -57,5 +66,7 @@ class Interface(QMainWindow):
         screen_height = desktop.height()
         self.move((screen_width - self.width()) // 2, (screen_height - self.height()) // 2)
 
+    def closeEvent(self, a0: QCloseEvent) -> None:
+        self.controller.prompt_box()
 
 

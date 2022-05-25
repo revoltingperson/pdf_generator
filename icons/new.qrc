@@ -1,11 +1,13 @@
 <RCC>
   <qresource prefix="icons">
-    <file>zoom_in.png</file>
-    <file>zoom_out.png</file>
-    <file>icons8-printer-64.png</file>
-    <file>active-zoom.png</file>
-    <file>icons8-text-64.png</file>
-    <file>icons8-transform-64.png</file>
-    <file>icons8-zoom-64.png</file>
+    <file>icons8-flip-horizontal-80.png</file>
+    <file>icons8-flip-vertical-80.png</file>
+    <file>icons8-index-80.png</file>
+    <file>icons8-print-80.png</file>
+    <file>icons8-resize-40.png</file>
+    <file>icons8-rotate-left-80.png</file>
+    <file>icons8-rotate-right-80.png</file>
+    <file>icons8-text-box-80.png</file>
+    <file>icons8-zoom-in-80.png</file>
   </qresource>
 </RCC>

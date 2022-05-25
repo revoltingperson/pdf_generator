@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent
 from PyQt5.QtWidgets import QGraphicsView, QWidget, QVBoxLayout
 from python_files.controller.zoom_controller import ZoomEnableDisable
@@ -21,11 +22,7 @@ class MainView(QGraphicsView):
         self.setRenderHints(QPainter.Antialiasing | QPainter.HighQualityAntialiasing
                             | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        self.zoom_control.operate_zoom(event)
-        super(MainView, self).mousePressEvent(event)
+        self.setDragMode(QGraphicsView.RubberBandDrag)
 
     def connect_zoom_controller(self, zoom_obj):
         self.zoom_control: ZoomEnableDisable = zoom_obj

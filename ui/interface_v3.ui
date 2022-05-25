@@ -266,11 +266,17 @@
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
    <property name="iconSize">
     <size>
      <width>24</width>
      <height>24</height>
     </size>
+   </property>
+   <property name="floatable">
+    <bool>true</bool>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -280,6 +286,10 @@
    </attribute>
    <addaction name="Zoom_In_Out"/>
    <addaction name="Add_Text"/>
+   <addaction name="Rotate_right"/>
+   <addaction name="Rotate_left"/>
+   <addaction name="Flip_horizontally"/>
+   <addaction name="Flip_vertically"/>
    <addaction name="Print"/>
   </widget>
   <action name="actionOpen_image">
@@ -320,7 +330,7 @@
   <action name="Print">
    <property name="icon">
     <iconset resource="../icons/new.qrc">
-     <normaloff>:/icons/icons8-printer-64.png</normaloff>:/icons/icons8-printer-64.png</iconset>
+     <normaloff>:/icons/icons8-print-80.png</normaloff>:/icons/icons8-print-80.png</iconset>
    </property>
    <property name="text">
     <string>File to print</string>
@@ -332,7 +342,7 @@
    </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
-     <normaloff>:/icons/icons8-text-64.png</normaloff>:/icons/icons8-text-64.png</iconset>
+     <normaloff>:/icons/icons8-text-box-80.png</normaloff>:/icons/icons8-text-box-80.png</iconset>
    </property>
    <property name="text">
     <string>Add Text</string>
@@ -343,7 +353,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/zoom_in.png</normaloff>:/icons/zoom_in.png</iconset>
    </property>
    <property name="text">
@@ -355,7 +365,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/zoom_out.png</normaloff>:/icons/zoom_out.png</iconset>
    </property>
    <property name="text">
@@ -368,7 +378,7 @@
    </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
-     <normaloff>:/icons/icons8-zoom-64.png</normaloff>:/icons/icons8-zoom-64.png</iconset>
+     <normaloff>:/icons/icons8-zoom-in-80.png</normaloff>:/icons/icons8-zoom-in-80.png</iconset>
    </property>
    <property name="text">
     <string>Zoom_In_Out</string>
@@ -380,6 +390,42 @@
    </property>
    <property name="text">
     <string>Edit font</string>
+   </property>
+  </action>
+  <action name="Rotate_right">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-rotate-right-80.png</normaloff>:/icons/icons8-rotate-right-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rotate canvas right</string>
+   </property>
+  </action>
+  <action name="Rotate_left">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-rotate-left-80.png</normaloff>:/icons/icons8-rotate-left-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rotate canvas left</string>
+   </property>
+  </action>
+  <action name="Flip_horizontally">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-flip-horizontal-80.png</normaloff>:/icons/icons8-flip-horizontal-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Flip horizontally</string>
+   </property>
+  </action>
+  <action name="Flip_vertically">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-flip-vertical-80.png</normaloff>:/icons/icons8-flip-vertical-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Flip vertically</string>
    </property>
   </action>
  </widget>

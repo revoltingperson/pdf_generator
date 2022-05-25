@@ -1,10 +1,12 @@
 import os
-from PyQt5.QtGui import QPainter
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter, QTransform, QPixmap
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtWidgets import QFileDialog, QWidget, QMessageBox, QDialog
+from PyQt5.QtWidgets import QFileDialog, QWidget, QMessageBox, QDialog, QGraphicsPixmapItem
 from python_files.interface.pdf_dialog import PdfOpener
-from python_files.model.calculations import Model
-from collection_of_controllers import CntrsHolder
+from python_files.model.image_editing import Model
+from collection_of_controllers import ControllersHolder
 
 
 class Controller:
@@ -13,32 +15,31 @@ class Controller:
 
         self.model = Model()
         self.interface = Interface(self)
-        self.__build_action_objects()
+        self.__build_checked_button_actions()
 
     def main(self):
         self.interface.main()
 
-    def __build_action_objects(self):
-        from text_in_image_controller import TextItem
-        from zoom_controller import ZoomEnableDisable
+    def __build_checked_button_actions(self):
+        self.holder = ControllersHolder(self.interface)
+        self.interface.scene.connect_text_items(self.holder.text_item)
+        self.interface.view_widget.connect_zoom_controller(self.holder.zoom_control)
 
-        self.zoom_control = ZoomEnableDisable(self.interface)
-        self.interface.view_widget.connect_zoom_controller(self.zoom_control)
+    def tool_bar_checked_buttons(self):
+        self.holder.verify_one_one_active()
 
-        self.text_to_image = TextItem(self.interface)
-        self.interface.scene.connect_text_items(self.text_to_image)
-
-    def tool_bar_actions(self):
-        CntrsHolder.verify_only_one_active()
+    def prompt_box(self):
+        box = QMessageBox.question(self.interface, 'Before continuing', 'Would you like to save the current image?',
+                                   buttons=QMessageBox.StandardButtons(QMessageBox.Yes | QMessageBox.No))
+        if box == QMessageBox.Yes:
+            self.save_the_image()
+        else:
+            return False
 
     def open_new_image(self):
         """file_name gives back a list"""
         if not self.interface.scene.image.isNull():
-            box = QMessageBox.question(self.interface, 'Before continuing', 'Save before opening another image?',
-                                       buttons=QMessageBox.StandardButtons(QMessageBox.Yes | QMessageBox.No))
-            if box == QMessageBox.Yes:
-                self.save_the_image()
-            else:
+            if not self.prompt_box():
                 self.__help_open_file()
         else:
             self.__help_open_file()
@@ -68,7 +69,6 @@ class Controller:
                                                "Image Files(*.png *.jpg *.bmp *.raw *.jpeg)")
         allowed = ['.png', '.jpg', '.bmp', '.raw', '.jpeg']
         if image_file:
-            # and not self.interface.scene.image.isNull()
             if all([not image_file.endswith(ending) for ending in allowed]):
                 image_file = image_file + (allowed[0])
             self.interface.scene.save_image_from_canvas(image_file)
@@ -85,6 +85,36 @@ class Controller:
             painter.setRenderHints(QPainter.Antialiasing)
             self.interface.scene.render(painter)
             painter.end()
+
+    def check_if_pixmap_on_canvas(self) -> bool:
+        for item in self.interface.scene.items():
+            if isinstance(item, QGraphicsPixmapItem):
+                return True
+        return False
+
+    def do_rotation(self, degree):
+        if self.check_if_pixmap_on_canvas():
+            rotated = self.interface.scene.image.transformed(QTransform().rotate(degree),
+                                                             mode=Qt.SmoothTransformation)
+            self.interface.scene.map_pixmap(rotated, new_image=False)
+
+    def do_flip(self, x, y):
+        if self.check_if_pixmap_on_canvas():
+            flipped = self.interface.scene.image.transformed(QTransform().scale(x, y),
+                                                             mode=Qt.SmoothTransformation)
+            self.interface.scene.map_pixmap(flipped)
+
+    def rotate_right(self):
+        self.do_rotation(90)
+
+    def rotate_left(self):
+        self.do_rotation(-90)
+
+    def flip_horizontally(self):
+        self.do_flip(-1, 1)
+
+    def flip_vertically(self):
+        self.do_flip(1, -1)
 
 
 if __name__ == '__main__':

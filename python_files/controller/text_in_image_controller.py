@@ -1,13 +1,12 @@
-from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QRect
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QRect, QEvent
 from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen, QTextCursor, QTextCharFormat
 from PyQt5.QtWidgets import *
-from checked_builder import CheckedControllers
+from collection_of_controllers import CheckedControllers
 
 debug = False
 
 
 class TextItem(CheckedControllers):
-
     def __init__(self, interface):
         super().__init__(interface)
         from python_files.interface.interface import Interface
@@ -25,6 +24,9 @@ class TextItem(CheckedControllers):
             item = ClickableItem(position)
             self.disable()
             self.interface.scene.addItem(item)
+            item.setSelected(True)
+            item.setZValue(1)
+
 
 
 class ClickableItem(QGraphicsRectItem):
@@ -56,10 +58,10 @@ class ClickableItem(QGraphicsRectItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def paint(self, painter, option, widget=None):
-        # print(f'{self.isUnderMouse()} mouse hover')
-        # print(f'{self.isSelected()} rect item selected')
-        # print(f'{self.input_field.text_edit.hasFocus()} textedit')
-        if self.isSelected() or self.input_field.text_edit.hasFocus():
+        if self.input_field.text_edit.hasFocus():
+            self.setSelected(True)
+
+        if self.isSelected():
             # draw everything
             pen = QPen()
             pen.setColor(Qt.black)
@@ -67,6 +69,7 @@ class ClickableItem(QGraphicsRectItem):
             painter.setPen(pen)
             painter.setBrush(Qt.transparent)
             painter.drawRect(self.rect())
+
         elif self.resizer.isSelected():
             # important hack to keep circle visible
             pen = QPen()
@@ -111,7 +114,6 @@ class Resizer(QGraphicsObject):
         if self.isSelected():
             pen = QPen()
             pen.setStyle(Qt.SolidLine)
-            # pen.setColor(QColor(237, 123, 24))
             pen.setColor(QColor("#58a4ff"))
             painter.setPen(pen)
             painter.setBrush(Qt.Dense3Pattern)
