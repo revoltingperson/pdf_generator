@@ -6,13 +6,9 @@ class ImageEditor:
     def __init__(self, image):
         self.image = image
         self.edited = image
+        self.height, self.width = self.image.shape[:2]
 
     def do_rotation(self, degree):
-        rotated = self.image.transformed(QTransform().rotate(degree),
-                                         mode=Qt.SmoothTransformation)
-        self.edited = rotated
-
+        pass
     def do_flip(self, x, y):
-        flipped = self.image.transformed(QTransform().scale(x, y),
-                                         mode=Qt.SmoothTransformation)
-        self.edited = flipped
+        pass

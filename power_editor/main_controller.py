@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPainter, QTransform
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QGraphicsPixmapItem, QVBoxLayout
 
+import cv2 as cv
 from image_scene import MainCanvas
 from interface_setup.interface import Interface
 from main_view import MainView
@@ -46,7 +47,7 @@ class Controller:
 
     def open_new_image(self):
         """file_name gives back a list"""
-        if not self.scene.image.isNull():
+        if self.scene.find_pixmap():
             if not self.prompt_box():
                 self.__help_open_file()
         else:
@@ -69,7 +70,8 @@ class Controller:
                 dial.exec()
             if dial.pdf_path is not None:
                 str_path = dial.pdf_path
-            self.scene.load_pixmap_from_image(str_path)
+            image = cv.imread(str_path)
+            self.scene.load_image(image)
 
     def save_the_image(self):
         dialog: QFileDialog = QFileDialog()
@@ -116,7 +118,7 @@ class Controller:
                 self.scene.deserialize(raw_data)
 
     def edit_image(self, command):
-        if self.check_if_pixmap_on_canvas():
+        if self.scene.find_pixmap():
             editor = ImageEditor(self.scene.image)
             if command == 'rotate_right':
                 editor.do_rotation(90)
@@ -126,17 +128,10 @@ class Controller:
                 editor.do_flip(-1, 1)
             if command == 'flip_vertically':
                 editor.do_flip(1, -1)
-            self.scene.map_pixmap(editor.edited)
-
-    def check_if_pixmap_on_canvas(self) -> bool:
-        for item in self.scene.items():
-            if isinstance(item, QGraphicsPixmapItem):
-                return True
-        return False
+            self.scene.load_image(editor.edited, new_image=False)
 
     def undo(self):
         pass
-        # self.scene.map_pixmap(self.scene.experimental_save[])
 
 
 if __name__ == '__main__':

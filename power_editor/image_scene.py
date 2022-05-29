@@ -1,4 +1,7 @@
 import typing
+
+import cv2
+
 from text_in_image_controller import TextItem, ClickableText
 
 from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice
@@ -18,8 +21,8 @@ class MainCanvas(QGraphicsScene, Serializable):
         super().__init__()
 
         self.view_widget = graphics_view
+        self.image = None
         self.view_widget.setScene(self)
-        self.image = QPixmap()
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.focusItemChanged.connect(lambda item: self.do_selection_on_focus(item))
         self.shift_pressed = False
@@ -42,30 +45,29 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
-    def load_pixmap_from_image(self, image):
-        """ CV2 needs an image, not pixmap to work
-            I need to convert my pixmap to real image -> process with cv2 -> display as pixmap
-        """
-        pix_mapped = QPixmap(image)
-        self.map_pixmap(pix_mapped)
+    def load_image(self, image, new_image: bool = True):
+        self.image = image
 
-    def map_pixmap(self, pix_mapped, new_image=True):
-        if not self.image.isNull():
-            if new_image:
-                self.clear()
-            else:
-                self.remove_old_instance()
+        self.remove_pixmap_policy(new_image)
+        frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        height, width = frame.shape[0], frame.shape[1]
 
-        width, height = pix_mapped.width(), pix_mapped.height()
+        q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
 
         border = BeautifulBorder(width, height)
-        self.addPixmap(pix_mapped)
-        self.image = pix_mapped
+        self.addPixmap(QPixmap().fromImage(q_image))
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         self.addItem(border)
 
         # if debug:
         #     print(f'{self.sceneRect()}:SCENE SIZE \n{self.view_widget.geometry()}: VIEW SIZE')
+
+    def remove_pixmap_policy(self, new_image):
+        if self.find_pixmap():
+            if new_image:
+                self.clear()
+            else:
+                self.remove_old_instance()
 
     def remove_old_instance(self):
         for item in self.items():
@@ -134,9 +136,10 @@ class MainCanvas(QGraphicsScene, Serializable):
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        self.map_pixmap(pixmap)
+        # self.map_pixmap(pixmap)
         for item in data['clickable_text']:
             self.text_item.load_from_json(item)
+
 
 
 class BeautifulBorder(QGraphicsRectItem):
