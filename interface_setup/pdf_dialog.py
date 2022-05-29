@@ -14,7 +14,7 @@ class PdfOpener(QDialog):
 
     def build_dialog(self):
         self.pdf_path = self.temp
-        path = Path.cwd().parent.parent.joinpath('ui', 'pdf_dialog.ui')
+        path = Path.cwd().parent.joinpath('ui', 'pdf_dialog.ui')
         uic.loadUi(path, self)
         self.__connect_buttons()
 
@@ -34,7 +34,7 @@ class PdfOpener(QDialog):
         self.close()
 
     def __convert_pdf_to_image(self):
-        with Path.cwd().parent.parent.joinpath('temp') as path:
+        with Path.cwd().parent.joinpath('temp') as path:
             self.__navigate_through_directories(path)
             image_from_pdf = convert_from_path(self.pdf_path,
                                                fmt='jpg',

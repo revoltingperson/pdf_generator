@@ -1,22 +1,19 @@
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QCursor
-from PyQt5.QtWidgets import QWidget, QAction, QSlider, QFrame, QToolBar, QLabel
+from PyQt5.QtWidgets import QWidget, QAction, QSlider
 from collection_of_controllers import CheckedControllers
 
 
 class ZoomEnableDisable(CheckedControllers):
-    def __init__(self, interface):
-        from python_files.interface.interface import Interface
+    def __init__(self, view, button):
 
-        super().__init__(interface)
-        self.interface: Interface = interface
-        self.central_widget: QWidget = self.interface.findChild(QWidget, 'CentralWidget')
-        self.frame = QWidget(self.interface.view_widget)
+        super().__init__()
+        self.frame = QWidget(view)
+        self.view_widget = view
         self.horizontal_slider = QSlider(self.frame)
         self.horizontal_slider.valueChanged.connect(lambda change: self.slider_slot(change))
 
-        self.button: QAction = self.interface.findChild(QAction, 'Zoom_In_Out')
+        self.button = button
 
         self.__zoom_in_factor = 1.3
         self.__zoom = 6
@@ -45,14 +42,14 @@ class ZoomEnableDisable(CheckedControllers):
         if self.__zoom < self.__upper_limit:
             zoom_fact = self.__zoom_in_factor
             self.__zoom += self.__zoom_step
-            self.interface.view_widget.scale(zoom_fact, zoom_fact)
+            self.view_widget.scale(zoom_fact, zoom_fact)
             self.horizontal_slider.setSliderPosition(self.__zoom)
 
     def __zoom_out(self):
         if self.__zoom > self.__lower_limit:
             zoom_fact = self.__zoom_out_factor
             self.__zoom -= self.__zoom_step
-            self.interface.view_widget.scale(zoom_fact, zoom_fact)
+            self.view_widget.scale(zoom_fact, zoom_fact)
             self.horizontal_slider.setSliderPosition(self.__zoom)
 
     def __wheel_zoom(self, event):

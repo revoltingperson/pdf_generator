@@ -2,8 +2,7 @@ from PyQt5.QtWidgets import QAction
 
 
 class CheckedControllers:
-    def __init__(self, interface):
-        self.interface = interface
+    def __init__(self):
         self.last_active = False
         ControllersHolder.controllers.append(self)
         self.button = QAction
@@ -19,14 +18,17 @@ class CheckedControllers:
 class ControllersHolder:
     controllers = []
 
-    def __init__(self, interface):
+    def __init__(self, interface, scene, view):
         from zoom_controller import ZoomEnableDisable
         from text_in_image_controller import TextItem
 
-        self.zoom_control = ZoomEnableDisable(interface)
-        self.text_item = TextItem(interface)
+        button_zoom: QAction = interface.findChild(QAction, 'Zoom_In_Out')
+        button_text: QAction = interface.findChild(QAction, 'Add_Text')
 
-    def verify_one_one_active(self):
+        self.zoom_control = ZoomEnableDisable(view, button_zoom)
+        self.text_item = TextItem(scene, button_text)
+
+    def verify_only_one_active(self):
         self.__disable_last_controller()
         self.__activate_new_controller()
 

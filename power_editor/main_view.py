@@ -1,21 +1,17 @@
-from PyQt5.QtCore import QEvent
-from PyQt5.QtGui import QPainter, QMouseEvent, QWheelEvent
-from PyQt5.QtWidgets import QGraphicsView, QWidget, QVBoxLayout
-from python_files.controller.zoom_controller import ZoomEnableDisable
+from PyQt5.QtGui import QPainter, QWheelEvent
+from PyQt5.QtWidgets import QGraphicsView
+from zoom_controller import ZoomEnableDisable
 
 
 class MainView(QGraphicsView):
     zoom_control: ZoomEnableDisable
 
-    def __init__(self, interface):
+    def __init__(self, layout):
 
         # wid = interface.findChild(QWidget, 'CentralWidget')
         super().__init__()
-        layout: QVBoxLayout = interface.findChild(QVBoxLayout, 'verticalLayout')
         layout.addWidget(self)
-        self.interface = interface
         self.__create_settings()
-
 
     def __create_settings(self):
         self.setMouseTracking(True)

@@ -161,12 +161,15 @@
     <addaction name="Open_Image"/>
     <addaction name="Open_PDF"/>
     <addaction name="Save_file"/>
+    <addaction name="separator"/>
+    <addaction name="Save_project"/>
+    <addaction name="Load_project"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionUndo"/>
+    <addaction name="Undo"/>
    </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuEdit"/>
@@ -312,7 +315,7 @@
     <string>Open PDF</string>
    </property>
   </action>
-  <action name="actionUndo">
+  <action name="Undo">
    <property name="text">
     <string>Undo</string>
    </property>
@@ -426,6 +429,16 @@
    </property>
    <property name="text">
     <string>Flip vertically</string>
+   </property>
+  </action>
+  <action name="Save_project">
+   <property name="text">
+    <string>Save project</string>
+   </property>
+  </action>
+  <action name="Load_project">
+   <property name="text">
+    <string>Load project</string>
    </property>
   </action>
  </widget>

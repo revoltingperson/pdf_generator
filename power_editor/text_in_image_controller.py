@@ -1,45 +1,60 @@
-from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QRect, QEvent
-from PyQt5.QtGui import QPalette, QColor, QPixmap, QCursor, QPen, QTextCursor, QTextCharFormat
+from string import Template
+
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QSettings
+from PyQt5.QtGui import QColor, QPen, QTextCursor, QTextCharFormat, QFont
 from PyQt5.QtWidgets import *
 from collection_of_controllers import CheckedControllers
+from serializer.serializer import Serializable
 
-debug = False
+debug = True
 
 
 class TextItem(CheckedControllers):
-    def __init__(self, interface):
-        super().__init__(interface)
-        from python_files.interface.interface import Interface
-
-        self.interface: Interface = interface
-        self.button: QAction = interface.findChild(QAction, 'Add_Text')
+    def __init__(self, scene, button):
+        super().__init__()
+        self.scene = scene
+        self.button = button
 
     def operate_text_editor(self, event):
         position = event.scenePos()
-        items = self.interface.scene.items(position)
-        if debug:
-            print(f"{len(items)} items at click")
-            print(f"{self.interface.scene.items()} all items at scene")
         if self.button.isChecked():
-            item = ClickableItem(position)
+            item = ClickableText(position)
             self.disable()
-            self.interface.scene.addItem(item)
+            self.scene.addItem(item)
             item.setSelected(True)
-            item.setZValue(1)
+
+    def load_from_json(self, data):
+        wid, height = data['width'], data['height']
+        x, y = data['position'][0], data['position'][1]
+        text = data['text']
+        r, g, b, a = data['color']
+        font = data['font']
+        split_font = font.split(',')
+        family, size, weight, italics = split_font[0], split_font[1], split_font[4], split_font[5]
+        position = QPointF(x, y)
+        item = ClickableText(position, rect=QRectF(0, 0, float(wid), float(height)))
+
+        item.input_field.text_edit.setText(text)
+        item.input_field.text_edit.setFont(QFont(family, int(size), int(weight), int(italics)))
+        set_c = Template("QTextEdit {color: rgb($r, $g, $b);}")
+        formatted = set_c.safe_substitute(r=r, g=g, b=b)
+        item.input_field.text_edit.setStyleSheet(formatted)
+
+        self.scene.addItem(item)
 
 
-
-class ClickableItem(QGraphicsRectItem):
+class ClickableText(QGraphicsRectItem, Serializable):
     width_inner = 80
     height_inner = 35
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(rect)
 
-        self._initialize_flags()
+        # self.q_settings = QSettings('MyQt', 'App')
 
+        self._initialize_flags()
         self.setPos(position)
-        self.position = position
+        self.setZValue(1)
 
         self.resizer = Resizer(parent=self)
         resizer_width = self.resizer.rect.width() / 2
@@ -60,11 +75,10 @@ class ClickableItem(QGraphicsRectItem):
     def paint(self, painter, option, widget=None):
         if self.input_field.text_edit.hasFocus():
             self.setSelected(True)
-
         if self.isSelected():
             # draw everything
             pen = QPen()
-            pen.setColor(Qt.black)
+            pen.setColor(QColor('#ff5533'))
             self.resizer.show()
             painter.setPen(pen)
             painter.setBrush(Qt.transparent)
@@ -91,8 +105,18 @@ class ClickableItem(QGraphicsRectItem):
     def initialize_input(self):
         self.input_field.setMinimumSize(10, 10)
         self.input_field.setGeometry(0, 0,
-                                     self.width_inner, self.height_inner)
+                                     int(self.rect().width()), int(self.rect().height()))
         self.content.setWidget(self.input_field)
+
+    def serialize(self):
+        return {
+            'width': self.rect().width(),
+            'height': self.rect().height(),
+            'position': (self.pos().x(), self.pos().y()),
+            'text': self.input_field.text_edit.toPlainText(),
+            'color': self.input_field.text_edit.textColor().getRgb(),
+            'font': self.input_field.text_edit.currentCharFormat().font().toString()
+        }
 
 
 class Resizer(QGraphicsObject):
@@ -177,6 +201,7 @@ class TextEdit(QTextEdit):
             format_obj = QTextCharFormat()
             format_obj.setFont(font)
             cur.setCharFormat(format_obj)
+            print(self.currentCharFormat().font().toString())
 
     def color_dialog(self):
         color = QColorDialog.getColor()
