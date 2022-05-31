@@ -21,11 +21,15 @@ class MainCanvas(QGraphicsScene, Serializable):
         super().__init__()
 
         self.view_widget = graphics_view
-        self.image = None
+        self.displayed_image = None
+        self.reserved_image = None
+        self.shift_pressed = False
+        self.image_w = 0
+        self.image_h = 0
+
         self.view_widget.setScene(self)
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.focusItemChanged.connect(lambda item: self.do_selection_on_focus(item))
-        self.shift_pressed = False
         self.__set_placeholder_rectangle()
 
     def __set_placeholder_rectangle(self):
@@ -46,28 +50,32 @@ class MainCanvas(QGraphicsScene, Serializable):
         image.save(where)
 
     def load_image(self, image, new_image: bool = True):
-        self.image = image
-
+        self.displayed_image = image
         self.remove_pixmap_policy(new_image)
+
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
-
+        self.image_w = width
+        self.image_h = height
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
+        pixmap = QPixmap().fromImage(q_image)
+        self.map_pixmap_to_scene(pixmap)
 
+    def map_pixmap_to_scene(self, pixmap):
+        self.build_border(pixmap.height(), pixmap.width())
+        self.addPixmap(pixmap)
+        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pixmap.width(), pixmap.height())
+
+    def build_border(self, height, width):
         border = BeautifulBorder(width, height)
-        self.addPixmap(QPixmap().fromImage(q_image))
-        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         self.addItem(border)
 
-        # if debug:
-        #     print(f'{self.sceneRect()}:SCENE SIZE \n{self.view_widget.geometry()}: VIEW SIZE')
-
     def remove_pixmap_policy(self, new_image):
-        if self.find_pixmap():
-            if new_image:
-                self.clear()
-            else:
-                self.remove_old_instance()
+        if new_image:
+            self.clear()
+            self.reserved_image = self.displayed_image.copy()
+        else:
+            self.remove_old_instance()
 
     def remove_old_instance(self):
         for item in self.items():
@@ -101,10 +109,13 @@ class MainCanvas(QGraphicsScene, Serializable):
         if event.key() == Qt.Key_Shift:
             self.shift_pressed = False
 
-    def find_pixmap(self) -> QPixmap:
+    def return_scene_item_as_pixmap(self) -> QPixmap:
         for item in self.items():
             if isinstance(item, QGraphicsPixmapItem):
                 return item.pixmap()
+
+    def return_size_of_image(self):
+        return self.image_w, self.image_h
 
     def find_text_items_on_scene(self) -> list:
         items = []
@@ -115,7 +126,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         return items
 
     def convert_to_bytes(self) -> QByteArray:
-        pixmap = self.find_pixmap()
+        pixmap = self.return_scene_item_as_pixmap()
         bites = QByteArray()
         buff = QBuffer(bites)
         buff.open(QIODevice.WriteOnly)
@@ -136,10 +147,13 @@ class MainCanvas(QGraphicsScene, Serializable):
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        # self.map_pixmap(pixmap)
+        self.map_pixmap_to_scene(pixmap)
         for item in data['clickable_text']:
             self.text_item.load_from_json(item)
 
+    def update(self, rect: QRectF = ...) -> None:
+        print(self.changed)
+        print(self.sceneRect())
 
 
 class BeautifulBorder(QGraphicsRectItem):

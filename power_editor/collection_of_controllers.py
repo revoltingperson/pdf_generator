@@ -1,10 +1,31 @@
 from PyQt5.QtWidgets import QAction
 
 
-class CheckedControllers:
+class Controllers:
+    controllers = []
+
+    @staticmethod
+    def verify_only_one_active():
+        Controllers.__disable_last_controller()
+        Controllers.__activate_new_controller()
+
+    @staticmethod
+    def __disable_last_controller():
+        for controller in Controllers.controllers:
+            if controller.last_active:
+                controller.disable()
+
+    @staticmethod
+    def __activate_new_controller():
+        for controller in Controllers.controllers:
+            if controller.button.isChecked():
+                controller.activate()
+
+
+class CheckedControllers(Controllers):
     def __init__(self):
         self.last_active = False
-        ControllersHolder.controllers.append(self)
+        self.controllers.append(self)
         self.button = QAction
 
     def activate(self):
@@ -15,29 +36,23 @@ class CheckedControllers:
         self.button.setChecked(False)
 
 
-class ControllersHolder:
-    controllers = []
-
-    def __init__(self, interface, scene, view):
+class Holder:
+    def __init__(self, controller):
         from zoom_controller import ZoomEnableDisable
         from text_in_image_controller import TextItem
+        from rotation_controller import Rotator
+        from resize_controller import Resizer
 
-        button_zoom: QAction = interface.findChild(QAction, 'Zoom_In_Out')
-        button_text: QAction = interface.findChild(QAction, 'Add_Text')
+        self.zoom_control = ZoomEnableDisable(controller)
+        self.text_item = TextItem(controller)
+        self.rotator = Rotator(controller)
+        self.resizer = Resizer(controller)
 
-        self.zoom_control = ZoomEnableDisable(view, button_zoom)
-        self.text_item = TextItem(scene, button_text)
+    def get_spin_value(self):
+        return self.rotator.spin_box.value()
 
-    def verify_only_one_active(self):
-        self.__disable_last_controller()
-        self.__activate_new_controller()
+    def get_resize_value(self):
+        return self.resizer.width_box.value(), self.resizer.height_box.value()
 
-    def __disable_last_controller(self):
-        for controller in self.controllers:
-            if controller.last_active:
-                controller.disable()
 
-    def __activate_new_controller(self):
-        for controller in self.controllers:
-            if controller.button.isChecked():
-                controller.activate()
+

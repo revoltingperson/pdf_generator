@@ -1,16 +1,18 @@
 import json
 import os
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QTransform
+
+import numpy
+from PyQt5.QtCore import QThread, pyqtSlot
+from PyQt5.QtGui import QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QGraphicsPixmapItem, QVBoxLayout
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout
 
 import cv2 as cv
 from image_scene import MainCanvas
 from interface_setup.interface import Interface
 from main_view import MainView
-from interface_setup.pdf_dialog import PdfOpener
-from collection_of_controllers import ControllersHolder
+from toplevel.pdf_dialog import PdfOpener
+from collection_of_controllers import Holder, Controllers
 from image_editor import ImageEditor
 
 
@@ -20,12 +22,13 @@ class Controller:
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
         self.__build_checked_button_actions()
+        self.editor = ImageEditor(self.scene)
 
     def main(self):
         self.interface.main()
 
     def __build_checked_button_actions(self):
-        self.holder = ControllersHolder(self.interface, self.scene, self.view_widget)
+        self.holder = Holder(self)
         self.scene.connect_text_items(self.holder.text_item)
         self.view_widget.connect_zoom_controller(self.holder.zoom_control)
 
@@ -35,7 +38,7 @@ class Controller:
         self.scene = MainCanvas(self.view_widget)
 
     def tool_bar_checked_buttons(self):
-        self.holder.verify_only_one_active()
+        Controllers.verify_only_one_active()
 
     def prompt_box(self):
         box = QMessageBox.question(self.interface, 'Before continuing', 'Would you like to save the current image?',
@@ -47,7 +50,7 @@ class Controller:
 
     def open_new_image(self):
         """file_name gives back a list"""
-        if self.scene.find_pixmap():
+        if self.scene.return_scene_item_as_pixmap():
             if not self.prompt_box():
                 self.__help_open_file()
         else:
@@ -100,7 +103,7 @@ class Controller:
         dialog: QFileDialog = QFileDialog()
         project_file, _ = dialog.getSaveFileName(self.interface, 'Project file', '',
                                                  "File(*.json)")
-        if self.scene.find_pixmap():
+        if self.scene.return_scene_item_as_pixmap():
             if not project_file.endswith('.json'):
                 project_file += '.json'
             with open(project_file, 'w') as file:
@@ -117,18 +120,24 @@ class Controller:
                 raw_data = json.loads(file.read())
                 self.scene.deserialize(raw_data)
 
-    def edit_image(self, command):
-        if self.scene.find_pixmap():
-            editor = ImageEditor(self.scene.image)
+    def transform_image(self, command):
+        if self.scene.return_scene_item_as_pixmap():
+            self.editor.get_image()
             if command == 'rotate_right':
-                editor.do_rotation(90)
+                self.editor.do_rotation(-90)
             if command == 'rotate_left':
-                editor.do_rotation(-90)
+                self.editor.do_rotation(90)
             if command == 'flip_horizontally':
-                editor.do_flip(-1, 1)
+                self.editor.do_flip(-1)
             if command == 'flip_vertically':
-                editor.do_flip(1, -1)
-            self.scene.load_image(editor.edited, new_image=False)
+                self.editor.do_flip(1)
+            if command == 'custom_rotation':
+                self.editor.do_rotation(self.holder.get_spin_value())
+            if command == 'resize':
+                self.editor.resize(self.holder.get_resize_value())
+            if command == 'brightness':
+                self.editor.brightness_options(self.interface)
+
 
     def undo(self):
         pass

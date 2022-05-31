@@ -10,10 +10,10 @@ debug = True
 
 
 class TextItem(CheckedControllers):
-    def __init__(self, scene, button):
+    def __init__(self, controller):
         super().__init__()
-        self.scene = scene
-        self.button = button
+        self.scene = controller.scene
+        self.button = controller.interface.findChild(QAction, 'Add_Text')
 
     def operate_text_editor(self, event):
         position = event.scenePos()

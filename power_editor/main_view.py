@@ -7,8 +7,6 @@ class MainView(QGraphicsView):
     zoom_control: ZoomEnableDisable
 
     def __init__(self, layout):
-
-        # wid = interface.findChild(QWidget, 'CentralWidget')
         super().__init__()
         layout.addWidget(self)
         self.__create_settings()

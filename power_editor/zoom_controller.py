@@ -5,15 +5,15 @@ from collection_of_controllers import CheckedControllers
 
 
 class ZoomEnableDisable(CheckedControllers):
-    def __init__(self, view, button):
+    def __init__(self, controller):
 
         super().__init__()
-        self.frame = QWidget(view)
-        self.view_widget = view
+        self.frame = QWidget(controller.view_widget)
+        self.view_widget = controller.view_widget
         self.horizontal_slider = QSlider(self.frame)
         self.horizontal_slider.valueChanged.connect(lambda change: self.slider_slot(change))
 
-        self.button = button
+        self.button = controller.interface.findChild(QAction, 'Zoom_In_Out')
 
         self.__zoom_in_factor = 1.3
         self.__zoom = 6
@@ -21,7 +21,6 @@ class ZoomEnableDisable(CheckedControllers):
         self.__lower_limit, self.__upper_limit = 0, 12
         self.__zoom_out_factor = 1 / self.__zoom_in_factor
         self.build_slider()
-
 
     def activate(self):
         self.last_active = True
@@ -58,7 +57,6 @@ class ZoomEnableDisable(CheckedControllers):
         else:
             self.__zoom_out()
 
-
     def build_slider(self):
         self.horizontal_slider.setGeometry(QRect(5, 10, 120, 20))
         self.horizontal_slider.setMaximum(12)
@@ -79,6 +77,3 @@ class ZoomEnableDisable(CheckedControllers):
             self.__zoom_out()
         if change > self.__zoom:
             self.__zoom_in()
-
-
-

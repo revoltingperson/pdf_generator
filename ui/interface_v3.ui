@@ -171,8 +171,17 @@
     </property>
     <addaction name="Undo"/>
    </widget>
+   <widget class="QMenu" name="menuImage">
+    <property name="title">
+     <string>Image</string>
+    </property>
+    <addaction name="Grey_filter"/>
+    <addaction name="Color_channels"/>
+    <addaction name="Brightness_control"/>
+   </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuImage"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="palette">
@@ -291,8 +300,12 @@
    <addaction name="Add_Text"/>
    <addaction name="Rotate_right"/>
    <addaction name="Rotate_left"/>
+   <addaction name="Custom_rotation"/>
    <addaction name="Flip_horizontally"/>
    <addaction name="Flip_vertically"/>
+   <addaction name="Resize_image"/>
+   <addaction name="Excel_input"/>
+   <addaction name="Impose_image"/>
    <addaction name="Print"/>
   </widget>
   <action name="actionOpen_image">
@@ -439,6 +452,68 @@
   <action name="Load_project">
    <property name="text">
     <string>Load project</string>
+   </property>
+  </action>
+  <action name="Grey_filter">
+   <property name="text">
+    <string>Grey filter</string>
+   </property>
+  </action>
+  <action name="Color_channels">
+   <property name="text">
+    <string>Color channels</string>
+   </property>
+  </action>
+  <action name="Brightness_control">
+   <property name="text">
+    <string>Brightness control</string>
+   </property>
+  </action>
+  <action name="Custom_rotation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/newPrefix/icons8-circled-notch-80.png</normaloff>:/newPrefix/icons8-circled-notch-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Custom Rotation</string>
+   </property>
+  </action>
+  <action name="Excel_input">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/newPrefix/icons8-select-all-80.png</normaloff>:/newPrefix/icons8-select-all-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Excel input</string>
+   </property>
+  </action>
+  <action name="Impose_image">
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/newPrefix/icons8-xlarge-icons-80.png</normaloff>:/newPrefix/icons8-xlarge-icons-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Impose image</string>
+   </property>
+  </action>
+  <action name="actionResize_canvas">
+   <property name="text">
+    <string>Resize image</string>
+   </property>
+  </action>
+  <action name="Resize_image">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/icons/icons8-resize-40.png</normaloff>:/icons/icons8-resize-40.png</iconset>
+   </property>
+   <property name="text">
+    <string>Resize image</string>
    </property>
   </action>
  </widget>
