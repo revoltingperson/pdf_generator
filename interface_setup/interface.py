@@ -36,7 +36,7 @@ class Interface(QMainWindow):
         open_project = self.findChild(QAction, 'Load_project')
         open_project.triggered.connect(self.controller.load_project)
         brightness = self.findChild(QAction, 'Brightness_control')
-        brightness.triggered.connect(lambda command: self.controller.transform_image('brightness'))
+        brightness.triggered.connect(self.controller.change_brightness)
 
         undo = self.findChild(QAction, 'Undo')
         undo.triggered.connect(self.controller.undo)

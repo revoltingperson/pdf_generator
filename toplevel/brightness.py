@@ -21,7 +21,8 @@ class BrightnessWidget(QWidget):
         uic.loadUi(path, self)
         self.editor = editor
         self.brightness: QSlider = self.findChild(QSlider, 'brightness_slider')
-        self.brightness.valueChanged.connect(lambda val: editor.changed_brightness(val))
+        self.brightness.setValue(self.editor.last_brightness)
+        self.brightness.valueChanged.connect(lambda val: editor.changed_brightness(val, self.editor.input_image))
 
         self.gamma = self.findChild(QSlider, 'gamma_slider')
         self.gamma.valueChanged.connect(lambda val: editor.gamma_changed(val))

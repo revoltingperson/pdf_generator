@@ -22,7 +22,7 @@ class Controller:
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
         self.__build_checked_button_actions()
-        self.editor = ImageEditor()
+        self.editor = ImageEditor(self.scene)
 
     def main(self):
         self.interface.main()
@@ -121,51 +121,37 @@ class Controller:
                 self.scene.deserialize(raw_data)
 
     def do_rotation(self, degree):
-        self.editor.parse_image(self.scene.reserved_image)
-        image = self.editor.do_rotation(degree)
-        self.editor.parsed_image = image
-        resized = self.editor.resize((self.scene.image_w, self.scene.image_h))
-        self.scene.load_image(resized)
+        self.rebuild_image('rotate', degree)
 
     def do_custom_rotation(self):
         self.do_rotation(self.holder.get_spin_value())
 
     def resize(self):
-        """resize and apply all changes to image based on the parameters of last edit"""
-        self.editor.parse_image(self.scene.reserved_image)
-        rotated = self.editor.do_rotation()
-        self.editor.parsed_image = rotated
-        resized = self.editor.resize(self.holder.get_resize_value())
-        self.scene.load_image(resized)
+        self.rebuild_image('resize', 0)
 
     def flip_image(self, value):
-        self.editor.parse_image(self.scene.reserved_image)
-        image = self.editor.do_flip(value)
-        self.scene.reserved_image = image
+        if self.scene.return_scene_item_as_pixmap():
+            self.editor.add_image()
+            image = self.editor.do_flip(value)
+            self.scene.reserved_image = image
+            self.rebuild_image('rotate', 0)
 
-        self.editor.parsed_image = image
-        rotated = self.editor.do_rotation()
-        self.editor.parsed_image = rotated
-        resized = self.editor.resize((self.scene.image_w, self.scene.image_h))
-        self.scene.load_image(resized)
+    def rebuild_image(self, key, value):
+        """this function rebuilds the image according to the last changes"""
+        if self.scene.return_scene_item_as_pixmap():
+            rules = {'rotate': [value, (self.scene.image_w, self.scene.image_h)],
+                     'resize': [value, self.holder.get_resize_value()]
+                     }
 
-    # def transform_image(self, command):
-    #     if self.scene.return_scene_item_as_pixmap():
-    #         self.editor.get_image()
-    #         if command == 'rotate_right':
-    #             self.editor.do_rotation(-90)
-    #         if command == 'rotate_left':
-    #             self.editor.do_rotation(90)
-    #         if command == 'flip_horizontally':
-    #             self.editor.do_flip(-1)
-    #         if command == 'flip_vertically':
-    #             self.editor.do_flip(1)
-    #         if command == 'custom_rotation':
-    #             self.editor.do_rotation(self.holder.get_spin_value())
-    #         if command == 'resize':
-    #             self.editor.resize(self.holder.get_resize_value())
-    #         if command == 'brightness':
-    #             self.editor.brightness_options(self.interface)
+            self.editor.add_image()
+            image = self.editor.do_rotation(rules[key][0])
+            self.editor.input_image = image
+            resized = self.editor.resize(rules[key][1])
+            self.scene.load_image(resized)
+
+    def change_brightness(self):
+        self.editor.add_image()
+        self.editor.brightness_options(self.interface)
 
     def undo(self):
         pass
