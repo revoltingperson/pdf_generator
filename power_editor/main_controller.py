@@ -22,7 +22,7 @@ class Controller:
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
         self.__build_checked_button_actions()
-        self.editor = ImageEditor(self.scene)
+        self.editor = ImageEditor()
 
     def main(self):
         self.interface.main()
@@ -74,7 +74,7 @@ class Controller:
             if dial.pdf_path is not None:
                 str_path = dial.pdf_path
             image = cv.imread(str_path)
-            self.scene.load_image(image)
+            self.scene.load_image(image, new_image=True)
 
     def save_the_image(self):
         dialog: QFileDialog = QFileDialog()
@@ -120,24 +120,52 @@ class Controller:
                 raw_data = json.loads(file.read())
                 self.scene.deserialize(raw_data)
 
-    def transform_image(self, command):
-        if self.scene.return_scene_item_as_pixmap():
-            self.editor.get_image()
-            if command == 'rotate_right':
-                self.editor.do_rotation(-90)
-            if command == 'rotate_left':
-                self.editor.do_rotation(90)
-            if command == 'flip_horizontally':
-                self.editor.do_flip(-1)
-            if command == 'flip_vertically':
-                self.editor.do_flip(1)
-            if command == 'custom_rotation':
-                self.editor.do_rotation(self.holder.get_spin_value())
-            if command == 'resize':
-                self.editor.resize(self.holder.get_resize_value())
-            if command == 'brightness':
-                self.editor.brightness_options(self.interface)
+    def do_rotation(self, degree):
+        self.editor.parse_image(self.scene.reserved_image)
+        image = self.editor.do_rotation(degree)
+        self.editor.parsed_image = image
+        resized = self.editor.resize((self.scene.image_w, self.scene.image_h))
+        self.scene.load_image(resized)
 
+    def do_custom_rotation(self):
+        self.do_rotation(self.holder.get_spin_value())
+
+    def resize(self):
+        """resize and apply all changes to image based on the parameters of last edit"""
+        self.editor.parse_image(self.scene.reserved_image)
+        rotated = self.editor.do_rotation()
+        self.editor.parsed_image = rotated
+        resized = self.editor.resize(self.holder.get_resize_value())
+        self.scene.load_image(resized)
+
+    def flip_image(self, value):
+        self.editor.parse_image(self.scene.reserved_image)
+        image = self.editor.do_flip(value)
+        self.scene.reserved_image = image
+
+        self.editor.parsed_image = image
+        rotated = self.editor.do_rotation()
+        self.editor.parsed_image = rotated
+        resized = self.editor.resize((self.scene.image_w, self.scene.image_h))
+        self.scene.load_image(resized)
+
+    # def transform_image(self, command):
+    #     if self.scene.return_scene_item_as_pixmap():
+    #         self.editor.get_image()
+    #         if command == 'rotate_right':
+    #             self.editor.do_rotation(-90)
+    #         if command == 'rotate_left':
+    #             self.editor.do_rotation(90)
+    #         if command == 'flip_horizontally':
+    #             self.editor.do_flip(-1)
+    #         if command == 'flip_vertically':
+    #             self.editor.do_flip(1)
+    #         if command == 'custom_rotation':
+    #             self.editor.do_rotation(self.holder.get_spin_value())
+    #         if command == 'resize':
+    #             self.editor.resize(self.holder.get_resize_value())
+    #         if command == 'brightness':
+    #             self.editor.brightness_options(self.interface)
 
     def undo(self):
         pass

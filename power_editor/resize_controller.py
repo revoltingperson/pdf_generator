@@ -19,7 +19,7 @@ class Resizer(CheckedControllers):
         label_x.setText('W:')
         label_y.setText('H:')
         self.push.setText('Ok')
-        self.push.clicked.connect(lambda command: controller.transform_image('resize'))
+        self.push.clicked.connect(controller.resize)
         self.width_box.setMaximum(9999)
         self.height_box.setMaximum(9999)
         self.width_box.setMinimum(1)

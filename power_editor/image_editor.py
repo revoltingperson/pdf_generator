@@ -11,52 +11,51 @@ class ImageEditor:
     last_flip = 0
     last_brightness = 0
 
-    def __init__(self, scene):
+    def __init__(self):
         self.height = None
         self.width = None
-        self.scene = scene
+        self.parsed_image = None
         self.edited = None
 
-    def get_image(self):
-        self.height, self.width = self.scene.reserved_image.shape[:2]
+    def parse_image(self, image):
+        self.parsed_image = image
+        self.height, self.width = self.parsed_image.shape[:2]
 
-    def do_rotation(self, degree):
+    def do_rotation(self, degree=0):
+        # if value is zero we perform the rotation based on the old value
         rot_point = (self.width // 2, self.height // 2)
         rot_matrix = cv2.getRotationMatrix2D(rot_point, degree + self.last_rotation, 1.0)
         self.last_rotation += degree
 
         dimensions = (self.width, self.height)
-        rotated = cv2.warpAffine(self.scene.reserved_image, rot_matrix, dimensions)
-        self.scene.load_image(rotated, new_image=False)
+        rotated = cv2.warpAffine(self.parsed_image, rot_matrix, dimensions)
+        return rotated
 
     def do_flip(self, x):
         # flip clean image and perform last rotation and display it
-        only_last_rotation = 0
-        flip = cv2.flip(self.scene.reserved_image, x)
-        self.scene.reserved_image = flip
-        self.do_rotation(only_last_rotation)
+        flip = cv2.flip(self.parsed_image, x)
+        self.last_flip = x
+        return flip
 
     def resize(self, size):
         wid, ht = size[0], size[1]
-        resized = imutils.resize(self.scene.reserved_image, width=wid, height=ht)
-        self.scene.load_image(resized, new_image=False)
+        resized = cv2.resize(self.parsed_image, size)
+        return resized
 
     def brightness_options(self, parent):
         BrightnessWidget(parent, self)
 
     def changed_brightness(self, value):
-        hsv = cv2.cvtColor(self.scene.reserved_image, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(self.parsed_image, cv2.COLOR_BGR2HSV)
         self.last_brightness = value
         h, s, v = cv2.split(hsv)
-        print(value)
         lim = 255 - value
         v[v > lim] = 255
         v[v <= lim] += value
         final_hsv = cv2.merge((h, s, v))
         img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
-        # self.scene.reserved_image = img
 
-        self.scene.load_image(img, new_image=False)
+        return img
 
     def gamma_changed(self, value):
         value = value / 10

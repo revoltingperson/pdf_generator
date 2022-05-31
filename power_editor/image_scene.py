@@ -49,7 +49,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
-    def load_image(self, image, new_image: bool = True):
+    def load_image(self, image, new_image: bool = False):
         self.displayed_image = image
         self.remove_pixmap_policy(new_image)
 
