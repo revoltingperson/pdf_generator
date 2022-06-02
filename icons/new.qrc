@@ -11,6 +11,7 @@
     <file>icons8-zoom-in-80.png</file>
   </qresource>
   <qresource prefix="newPrefix">
+    <file>icons8-crop-80.png</file>
     <file>icons8-circled-notch-80.png</file>
     <file>icons8-select-all-80.png</file>
     <file>icons8-xlarge-icons-80.png</file>

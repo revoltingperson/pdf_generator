@@ -42,17 +42,15 @@ class Holder:
         from text_in_image_controller import TextItem
         from rotation_controller import Rotator
         from resize_controller import Resizer
+        from power_editor.crop_controller import Cropper
 
         self.zoom_control = ZoomEnableDisable(controller)
         self.text_item = TextItem(controller)
         self.rotator = Rotator(controller)
         self.resizer = Resizer(controller)
+        self.cropper = Cropper(controller)
 
-    def get_spin_value(self):
-        return self.rotator.spin_box.value()
 
-    def get_resize_value(self):
-        return self.resizer.width_box.value(), self.resizer.height_box.value()
 
 
 

@@ -50,8 +50,6 @@ class ClickableText(QGraphicsRectItem, Serializable):
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(rect)
 
-        # self.q_settings = QSettings('MyQt', 'App')
-
         self._initialize_flags()
         self.setPos(position)
         self.setZValue(1)

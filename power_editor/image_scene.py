@@ -2,10 +2,12 @@ import typing
 
 import cv2
 
+from power_editor.crop_controller import *
+from power_editor.image_editor import ImageEditor
 from text_in_image_controller import TextItem, ClickableText
 
-from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice
-from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent
+from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
+from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsProxyWidget, \
     QGraphicsRectItem, QWidget, QGraphicsPixmapItem
 from serializer.serializer import Serializable
@@ -15,18 +17,17 @@ debug = True
 
 class MainCanvas(QGraphicsScene, Serializable):
     text_item: TextItem
+    cropper: Cropper
     XY_ZERO = 0
 
     def __init__(self, graphics_view: QGraphicsView):
         super().__init__()
 
         self.view_widget = graphics_view
-        self.displayed_image = None
-        self.reserved_image = None
+        self.color_image = None
         self.shift_pressed = False
-        self.image_w = 0
-        self.image_h = 0
 
+        self.editor = ImageEditor(self)
         self.view_widget.setScene(self)
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.focusItemChanged.connect(lambda item: self.do_selection_on_focus(item))
@@ -49,22 +50,42 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
-    def load_image(self, image, new_image: bool = False):
-        self.displayed_image = image
+    def load_image(self, image, rules=None, new_image: bool = False):
+        if new_image:
+            self.color_image = image
         self.remove_pixmap_policy(new_image)
 
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
-        self.image_w = width
-        self.image_h = height
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap().fromImage(q_image)
-        self.map_pixmap_to_scene(pixmap)
+        if new_image:
+            self.editor.base_pixmap = pixmap
+        self.map_pixmap_to_scene(pixmap, rules)
 
-    def map_pixmap_to_scene(self, pixmap):
+    def transform_to_rules(self, pixmap, rules: dict):
+        key, val = list(rules.items())[0]
+        self.editor.set_pixmap(pixmap)
+        options = {'rotation': self.editor.do_rotation,
+                   'custom_rotation': self.editor.do_custom_rotation,
+                   'flip': self.editor.do_flip,
+                   'resize': self.editor.resize
+                   }
+        chosen = options.get(key)
+        return chosen(val)
+
+    def map_pixmap_to_scene(self, pixmap, rules):
+        print(f"pixmap: {pixmap.size()}")
+        if rules is not None:
+            pixmap = self.transform_to_rules(pixmap, rules)
+
+        print(f"pixmap: {pixmap.size()}")
+
+        self.remove_pixmap_policy(new_image=False)
         self.build_border(pixmap.height(), pixmap.width())
         self.addPixmap(pixmap)
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pixmap.width(), pixmap.height())
+        print(f'scene rect: {self.sceneRect()}')
 
     def build_border(self, height, width):
         border = BeautifulBorder(width, height)
@@ -73,7 +94,6 @@ class MainCanvas(QGraphicsScene, Serializable):
     def remove_pixmap_policy(self, new_image):
         if new_image:
             self.clear()
-            self.reserved_image = self.displayed_image.copy()
         else:
             self.remove_old_instance()
 
@@ -85,14 +105,20 @@ class MainCanvas(QGraphicsScene, Serializable):
     def connect_text_items(self, text_obj):
         self.text_item = text_obj
 
+    def connect_crop(self, crop_obj):
+        self.cropper = crop_obj
+
     def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         self.text_item.operate_text_editor(event)
+        self.cropper.operate_crop(event)
         if debug:
             print(f'selected items: {self.selectedItems()}')
             print(f'all items: {self.items()}')
+
         super(MainCanvas, self).mousePressEvent(event)
 
     def do_selection_on_focus(self, item):
+        if debug: print(f'selection changed to {item}')
         if isinstance(item, QGraphicsProxyWidget):
             if not self.shift_pressed:
                 [item.setSelected(False) for item in self.selectedItems()]
@@ -114,13 +140,9 @@ class MainCanvas(QGraphicsScene, Serializable):
             if isinstance(item, QGraphicsPixmapItem):
                 return item.pixmap()
 
-    def return_size_of_image(self):
-        return self.image_w, self.image_h
-
     def find_text_items_on_scene(self) -> list:
         items = []
         for item in self.items():
-            print(item.__class__)
             if isinstance(item, ClickableText):
                 items.append(item)
         return items
@@ -147,13 +169,9 @@ class MainCanvas(QGraphicsScene, Serializable):
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        self.map_pixmap_to_scene(pixmap)
+        self.map_pixmap_to_scene(pixmap, rules=None)
         for item in data['clickable_text']:
             self.text_item.load_from_json(item)
-
-    def update(self, rect: QRectF = ...) -> None:
-        print(self.changed)
-        print(self.sceneRect())
 
 
 class BeautifulBorder(QGraphicsRectItem):

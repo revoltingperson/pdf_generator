@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QWidget, QSlider
 class BrightnessWidget(QWidget):
     __instance__ = None
 
-    def __init__(self, parent, editor):
+    def __init__(self, parent):
         if BrightnessWidget.__instance__ is None:
             BrightnessWidget.__instance__ = self
         else:
@@ -19,13 +19,12 @@ class BrightnessWidget(QWidget):
         super().__init__(parent)
         path = Path.cwd().parent.joinpath('ui', 'brightness_filter.ui')
         uic.loadUi(path, self)
-        self.editor = editor
         self.brightness: QSlider = self.findChild(QSlider, 'brightness_slider')
-        self.brightness.setValue(self.editor.last_brightness)
-        self.brightness.valueChanged.connect(lambda val: editor.changed_brightness(val, self.editor.input_image))
+        # self.brightness.setValue(self.editor.last_brightness)
+        # self.brightness.valueChanged.connect(lambda val: editor.changed_brightness(val, self.editor.input_image))
 
         self.gamma = self.findChild(QSlider, 'gamma_slider')
-        self.gamma.valueChanged.connect(lambda val: editor.gamma_changed(val))
+        # self.gamma.valueChanged.connect(lambda val: editor.gamma_changed(val))
         self.setWindowFlag(Qt.Window)
         self.show()
 

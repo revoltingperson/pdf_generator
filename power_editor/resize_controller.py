@@ -19,7 +19,8 @@ class Resizer(CheckedControllers):
         label_x.setText('W:')
         label_y.setText('H:')
         self.push.setText('Ok')
-        self.push.clicked.connect(controller.resize)
+        self.push.clicked.connect(lambda rules: controller.transform_image({
+            'resize': (self.width_box.value(), self.height_box.value())}))
         self.width_box.setMaximum(9999)
         self.height_box.setMaximum(9999)
         self.width_box.setMinimum(1)
@@ -34,9 +35,10 @@ class Resizer(CheckedControllers):
 
     def activate(self):
         self.last_active = True
-        width, height = self.controller.scene.return_size_of_image()
-        self.width_box.setValue(width)
-        self.height_box.setValue(height)
+        item = self.controller.scene.return_scene_item_as_pixmap()
+        if item:
+            self.width_box.setValue(item.width())
+            self.height_box.setValue(item.height())
         self.frame.show()
 
     def disable(self):

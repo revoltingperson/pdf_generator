@@ -22,7 +22,6 @@ class Controller:
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
         self.__build_checked_button_actions()
-        self.editor = ImageEditor(self.scene)
 
     def main(self):
         self.interface.main()
@@ -30,6 +29,7 @@ class Controller:
     def __build_checked_button_actions(self):
         self.holder = Holder(self)
         self.scene.connect_text_items(self.holder.text_item)
+        self.scene.connect_crop(self.holder.cropper)
         self.view_widget.connect_zoom_controller(self.holder.zoom_control)
 
     def __set_working_background_to_work_with_graphics(self):
@@ -120,38 +120,13 @@ class Controller:
                 raw_data = json.loads(file.read())
                 self.scene.deserialize(raw_data)
 
-    def do_rotation(self, degree):
-        self.rebuild_image('rotate', degree)
+    def transform_image(self, rules):
+        item = self.scene.return_scene_item_as_pixmap()
+        if item:
+            self.scene.map_pixmap_to_scene(item, rules)
 
-    def do_custom_rotation(self):
-        self.do_rotation(self.holder.get_spin_value())
-
-    def resize(self):
-        self.rebuild_image('resize', 0)
-
-    def flip_image(self, value):
-        if self.scene.return_scene_item_as_pixmap():
-            self.editor.add_image()
-            image = self.editor.do_flip(value)
-            self.scene.reserved_image = image
-            self.rebuild_image('rotate', 0)
-
-    def rebuild_image(self, key, value):
-        """this function rebuilds the image according to the last changes"""
-        if self.scene.return_scene_item_as_pixmap():
-            rules = {'rotate': [value, (self.scene.image_w, self.scene.image_h)],
-                     'resize': [value, self.holder.get_resize_value()]
-                     }
-
-            self.editor.add_image()
-            image = self.editor.do_rotation(rules[key][0])
-            self.editor.input_image = image
-            resized = self.editor.resize(rules[key][1])
-            self.scene.load_image(resized)
-
-    def change_brightness(self):
-        self.editor.add_image()
-        self.editor.brightness_options(self.interface)
+    def open_brightness_control(self):
+        pass
 
     def undo(self):
         pass

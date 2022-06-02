@@ -304,6 +304,7 @@
    <addaction name="Flip_horizontally"/>
    <addaction name="Flip_vertically"/>
    <addaction name="Resize_image"/>
+   <addaction name="Crop"/>
    <addaction name="Excel_input"/>
    <addaction name="Impose_image"/>
    <addaction name="Print"/>
@@ -514,6 +515,18 @@
    </property>
    <property name="text">
     <string>Resize image</string>
+   </property>
+  </action>
+  <action name="Crop">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/new.qrc">
+     <normaloff>:/newPrefix/icons8-crop-80.png</normaloff>:/newPrefix/icons8-crop-80.png</iconset>
+   </property>
+   <property name="text">
+    <string>Crop</string>
    </property>
   </action>
  </widget>
