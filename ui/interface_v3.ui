@@ -483,6 +483,9 @@
    </property>
   </action>
   <action name="Excel_input">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-select-all-80.png</normaloff>:/newPrefix/icons8-select-all-80.png</iconset>
@@ -492,6 +495,9 @@
    </property>
   </action>
   <action name="Impose_image">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-xlarge-icons-80.png</normaloff>:/newPrefix/icons8-xlarge-icons-80.png</iconset>

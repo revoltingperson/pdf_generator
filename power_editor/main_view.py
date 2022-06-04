@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QPainter, QWheelEvent
 from PyQt5.QtWidgets import QGraphicsView
-from zoom_controller import ZoomEnableDisable
+from zoom_control import ZoomEnableDisable
 
 
 class MainView(QGraphicsView):

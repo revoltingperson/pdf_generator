@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QAction, QWidget, QSpinBox, QPushButton, QHBoxLayout, QLabel
 
-from collection_of_controllers import CheckedControllers
+from checked_bundle import CheckedButtons
 
 
-class Resizer(CheckedControllers):
+class Resizer(CheckedButtons):
     def __init__(self, controller):
         super().__init__()
         self.button = controller.interface.findChild(QAction, 'Resize_image')

@@ -64,6 +64,8 @@ class Interface(QMainWindow):
         resize.triggered.connect(self.controller.tool_bar_checked_buttons)
         crop = self.findChild(QAction, 'Crop')
         crop.triggered.connect(self.controller.tool_bar_checked_buttons)
+        excel_input = self.findChild(QAction, 'Excel_input')
+        excel_input.triggered.connect(self.controller.tool_bar_checked_buttons)
 
     def __place_app_window_at_screencenter(self):
         desktop = QDesktopWidget().screenGeometry()
@@ -73,3 +75,4 @@ class Interface(QMainWindow):
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         self.controller.prompt_box()
+

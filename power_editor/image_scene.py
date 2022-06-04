@@ -2,9 +2,10 @@ import typing
 
 import cv2
 
-from power_editor.crop_controller import *
+from power_editor.crop_control import *
+from power_editor.excel_control import ExcelController
 from power_editor.image_editor import ImageEditor
-from text_in_image_controller import TextItem, ClickableText
+from text_in_image_control import TextItem, ClickableText
 
 from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform
@@ -18,6 +19,7 @@ debug = True
 class MainCanvas(QGraphicsScene, Serializable):
     text_item: TextItem
     cropper: Cropper
+    excel: ExcelController
     XY_ZERO = 0
 
     def __init__(self, graphics_view: QGraphicsView):
@@ -32,6 +34,15 @@ class MainCanvas(QGraphicsScene, Serializable):
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.focusItemChanged.connect(lambda item: self.do_selection_on_focus(item))
         self.__set_placeholder_rectangle()
+
+    def connect_text_items(self, text_obj):
+        self.text_item = text_obj
+
+    def connect_crop(self, crop_obj):
+        self.cropper = crop_obj
+
+    def connect_excel(self, excel_obj):
+        self.excel = excel_obj
 
     def __set_placeholder_rectangle(self):
         width = 400
@@ -95,34 +106,23 @@ class MainCanvas(QGraphicsScene, Serializable):
         if new_image:
             self.clear()
         else:
-            self.remove_old_instance()
+            self.remove_old_pixmap_instance()
 
-    def remove_old_instance(self):
+    def remove_old_pixmap_instance(self):
         for item in self.items():
             if isinstance(item, QGraphicsPixmapItem) or isinstance(item, BeautifulBorder):
                 self.removeItem(item)
 
-    def connect_text_items(self, text_obj):
-        self.text_item = text_obj
-
-    def connect_crop(self, crop_obj):
-        self.cropper = crop_obj
-
     def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         self.text_item.operate_text_editor(event)
         self.cropper.operate_crop(event)
+        self.excel.operate_excel(event)
+
         if debug:
             print(f'selected items: {self.selectedItems()}')
             print(f'all items: {self.items()}')
 
         super(MainCanvas, self).mousePressEvent(event)
-
-    def do_selection_on_focus(self, item):
-        if debug: print(f'selection changed to {item}')
-        if isinstance(item, QGraphicsProxyWidget):
-            if not self.shift_pressed:
-                [item.setSelected(False) for item in self.selectedItems()]
-            item.parentItem().setSelected(True)
 
     def keyPressEvent(self, event) -> None:
         if event.key() == Qt.Key_Delete:
@@ -134,6 +134,13 @@ class MainCanvas(QGraphicsScene, Serializable):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key_Shift:
             self.shift_pressed = False
+
+    def do_selection_on_focus(self, item):
+        if debug: print(f'selection changed to {item}')
+        if isinstance(item, QGraphicsProxyWidget):
+            if not self.shift_pressed:
+                [item.setSelected(False) for item in self.selectedItems()]
+            item.parentItem().setSelected(True)
 
     def return_scene_item_as_pixmap(self) -> QPixmap:
         for item in self.items():

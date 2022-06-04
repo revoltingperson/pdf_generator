@@ -3,12 +3,14 @@ from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtWidgets import QAction, QGraphicsRectItem, QGraphicsItem, QGraphicsObject, QPushButton, \
     QGraphicsProxyWidget, QWidget, QVBoxLayout, QGraphicsSceneMouseEvent
 
-from power_editor.collection_of_controllers import CheckedControllers
+from checked_bundle import CheckedButtons
+from text_in_image_control import Resizer as CropResizer
 
 
 class CropperItem(QGraphicsRectItem):
     width_inner = 100
     height_inner = 100
+    lines_number = 3
 
     def __init__(self, cropper, position, rect=QRectF(0, 0, width_inner, height_inner)):
 
@@ -19,13 +21,12 @@ class CropperItem(QGraphicsRectItem):
         self.cropper = cropper
         self.main_proxy = CropProxy(self)
         self.resizer = CropResizer(parent=self)
-        # noinspection PyUnresolvedReferences
         self.main_proxy.crop_confirm.clicked.connect(self.initiate_crop)
 
         resizer_width = self.resizer.rect.width() / 2
         resizer_offset = QPointF(resizer_width, resizer_width)
         self.resizer.setPos(self.rect().bottomRight() - resizer_offset)
-        self.resizer.resize_signal[QPointF].connect(lambda change: self.resize(change))
+        self.resizer.resizeSignal[QPointF].connect(lambda change: self.resize(change))
 
     def _initialize_flags(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -44,15 +45,15 @@ class CropperItem(QGraphicsRectItem):
             painter.setBrush(Qt.NoBrush)
             painter.setPen(pen)
             vertical, horizontal = [], []
-            for line in range(3):
-                factor = line / 3
+            for line in range(self.lines_number):
+                factor = line / self.lines_number
                 line = QLineF(self.rect().width() * factor,
                               self.rect().y(),
                               self.rect().width() * factor,
                               self.rect().height())
                 vertical.append(QLineF(line))
-            for line in range(3):
-                factor = line / 3
+            for line in range(self.lines_number):
+                factor = line / self.lines_number
                 line = QLineF(self.rect().x(),
                               self.rect().height() * factor,
                               self.rect().width(),
@@ -79,8 +80,8 @@ class CropperItem(QGraphicsRectItem):
         self.update()
 
 
-class Cropper(CheckedControllers, QObject):
-    cropper: CropperItem
+class Cropper(CheckedButtons):
+    cropper_item: CropperItem
 
     def __init__(self, controller):
         super().__init__()
@@ -90,9 +91,9 @@ class Cropper(CheckedControllers, QObject):
     def operate_crop(self, event: QGraphicsSceneMouseEvent):
         position = event.scenePos()
         if self.button.isChecked():
-            self.cropper = CropperItem(self, position)
-            self.scene.addItem(self.cropper)
-            self.cropper.setSelected(True)
+            self.cropper_item = CropperItem(self, position)
+            self.scene.addItem(self.cropper_item)
+            self.cropper_item.setSelected(True)
             self.disable()
 
     def remove_signal(self):
@@ -101,51 +102,16 @@ class Cropper(CheckedControllers, QObject):
                 self.scene.removeItem(item)
 
     def crop_image_on_signal(self):
-        print('cropped?')
         item = self.scene.return_scene_item_as_pixmap()
         if item:
-            area_to_crop = QRect(int(self.cropper.scenePos().x()),
-                                 int(self.cropper.scenePos().y()),
-                                 int(self.cropper.rect().width()),
-                                 int(self.cropper.rect().height())
+            area_to_crop = QRect(int(self.cropper_item.scenePos().x()),
+                                 int(self.cropper_item.scenePos().y()),
+                                 int(self.cropper_item.rect().width()),
+                                 int(self.cropper_item.rect().height())
                                  )
             cropped_image_to_load = item.copy(area_to_crop)
             self.scene.map_pixmap_to_scene(cropped_image_to_load, rules=None)
-            self.cropper.setSelected(False)
-
-
-class CropResizer(QGraphicsObject):
-    resize_signal = pyqtSignal(QPointF)
-
-    def __init__(self, parent, rect=QRectF(0, 0, 10, 10)):
-        print(parent)
-        super().__init__(parent)
-
-        self.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
-
-        self.rect = rect
-
-    def boundingRect(self):
-        return self.rect
-
-    def paint(self, painter, option, widget=None):
-        if self.isSelected():
-            pen = QPen()
-            pen.setStyle(Qt.SolidLine)
-            pen.setColor(QColor("#58a4ff"))
-            painter.setPen(pen)
-            painter.setBrush(Qt.Dense3Pattern)
-        painter.setBrush(QColor(59, 47, 38))
-        painter.drawEllipse(self.rect)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange:
-            if self.isSelected():
-                self.resize_signal[QPointF].emit(value - self.pos())
-
-        return value
+            self.cropper_item.setSelected(False)
 
 
 class CropProxy(QGraphicsProxyWidget):
@@ -172,6 +138,7 @@ class CropProxy(QGraphicsProxyWidget):
 
         line, line1, line2 = vertical
         lineh, lineh1, lineh2 = horizontal
+        """resizing of the button when borders change (a bit messy, but I don't feel like cleaning it up)"""
         if line2.x1() - line1.x1() <= 40:
             self.proxy.setGeometry(int(line1.x1()), int(rect.height() // 3), 20, 20)
             self.crop_confirm.setGeometry(0, 0, int(line2.x1() - line1.x1()), 20)

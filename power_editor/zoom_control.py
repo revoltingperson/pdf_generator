@@ -1,10 +1,10 @@
 from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QAction, QSlider
-from collection_of_controllers import CheckedControllers
+from checked_bundle import CheckedButtons
 
 
-class ZoomEnableDisable(CheckedControllers):
+class ZoomEnableDisable(CheckedButtons):
     def __init__(self, controller):
 
         super().__init__()

@@ -11,9 +11,9 @@ import cv2 as cv
 from image_scene import MainCanvas
 from interface_setup.interface import Interface
 from main_view import MainView
+from toplevel.excel_control_window import ExcelWindow
 from toplevel.pdf_dialog import PdfOpener
-from collection_of_controllers import Holder, Controllers
-from image_editor import ImageEditor
+from checked_bundle import Holder, Collector
 
 
 class Controller:
@@ -30,6 +30,7 @@ class Controller:
         self.holder = Holder(self)
         self.scene.connect_text_items(self.holder.text_item)
         self.scene.connect_crop(self.holder.cropper)
+        self.scene.connect_excel(self.holder.excel)
         self.view_widget.connect_zoom_controller(self.holder.zoom_control)
 
     def __set_working_background_to_work_with_graphics(self):
@@ -38,11 +39,13 @@ class Controller:
         self.scene = MainCanvas(self.view_widget)
 
     def tool_bar_checked_buttons(self):
-        Controllers.verify_only_one_active()
+        Collector.verify_only_one_active()
 
     def prompt_box(self):
         box = QMessageBox.question(self.interface, 'Before continuing', 'Would you like to save the current image?',
                                    buttons=QMessageBox.StandardButtons(QMessageBox.Yes | QMessageBox.No))
+
+        self.interface.app.closeAllWindows()
         if box == QMessageBox.Yes:
             self.save_the_image()
         else:
@@ -91,13 +94,23 @@ class Controller:
     def open_pdf_file(self):
         self.__help_open_file(open_pdf=True)
 
-    def print_file(self):
+    def print_file(self, excel, pdf_generator=False):
         printer = QPrinter()
         if QPrintDialog(printer).exec() == QDialog.Accepted:
-            painter = QPainter(printer)
-            painter.setRenderHints(QPainter.Antialiasing)
-            self.scene.render(painter)
-            painter.end()
+            if pdf_generator:
+                for name in excel:
+                    head, filename = os.path.split(printer.outputFileName())
+                    printer.setOutputFileName(os.path.join(head, name))
+                    self.holder.excel.insert_with_right_format(name)
+                    self.finish_print(printer)
+            else:
+                self.finish_print(printer)
+
+    def finish_print(self, printer):
+        painter = QPainter(printer)
+        painter.setRenderHints(QPainter.Antialiasing)
+        self.scene.render(painter)
+        painter.end()
 
     def save_project(self):
         dialog: QFileDialog = QFileDialog()

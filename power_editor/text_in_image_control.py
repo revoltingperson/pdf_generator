@@ -3,13 +3,13 @@ from string import Template
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QSettings
 from PyQt5.QtGui import QColor, QPen, QTextCursor, QTextCharFormat, QFont
 from PyQt5.QtWidgets import *
-from collection_of_controllers import CheckedControllers
+from checked_bundle import CheckedButtons
 from serializer.serializer import Serializable
 
 debug = True
 
 
-class TextItem(CheckedControllers):
+class TextItem(CheckedButtons):
     def __init__(self, controller):
         super().__init__()
         self.scene = controller.scene
@@ -47,9 +47,10 @@ class ClickableText(QGraphicsRectItem, Serializable):
     width_inner = 80
     height_inner = 35
 
-    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
+    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), add_event_handler=False):
         super().__init__(rect)
 
+        self.optional_action: bool = add_event_handler
         self._initialize_flags()
         self.setPos(position)
         self.setZValue(1)
@@ -91,6 +92,8 @@ class ClickableText(QGraphicsRectItem, Serializable):
             painter.drawRect(self.rect())
         else:
             self.resizer.hide()
+        if self.optional_action:
+            self.extend_paint_action()
 
     @pyqtSlot()
     def resize(self, change):
@@ -115,6 +118,9 @@ class ClickableText(QGraphicsRectItem, Serializable):
             'color': self.input_field.text_edit.textColor().getRgb(),
             'font': self.input_field.text_edit.currentCharFormat().font().toString()
         }
+
+    def extend_paint_action(self):
+        pass
 
 
 class Resizer(QGraphicsObject):
@@ -174,6 +180,8 @@ class TextEdit(QTextEdit):
         QMenu { background-color: #58a4ff;}
     """
 
+    double_click = pyqtSignal(bool)
+
     def __init__(self):
         super().__init__()
         self.setText('Add text')
@@ -204,3 +212,6 @@ class TextEdit(QTextEdit):
     def color_dialog(self):
         color = QColorDialog.getColor()
         self.setTextColor(color)
+
+    def mouseDoubleClickEvent(self, QMouseEvent):
+        self.double_click[bool].emit(True)

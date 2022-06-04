@@ -1,9 +1,9 @@
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSpinBox, QPushButton, QAction
-from collection_of_controllers import CheckedControllers
+from checked_bundle import CheckedButtons
 
 
-class Rotator(CheckedControllers):
+class Rotator(CheckedButtons):
     def __init__(self, controller):
         super().__init__()
         self.button = controller.interface.findChild(QAction, 'Custom_rotation')
