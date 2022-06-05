@@ -36,23 +36,6 @@ class CheckedButtons(Collector):
         self.button.setChecked(False)
 
 
-class Holder:
-    def __init__(self, controller):
-        from zoom_control import ZoomEnableDisable
-        from text_in_image_control import TextItem
-        from rotation_control import Rotator
-        from resize_control import Resizer
-        from crop_control import Cropper
-        from excel_control import ExcelController
-
-        self.zoom_control = ZoomEnableDisable(controller)
-        self.text_item = TextItem(controller)
-        self.rotator = Rotator(controller)
-        self.resizer = Resizer(controller)
-        self.cropper = Cropper(controller)
-        self.excel = ExcelController(controller)
-
-
 
 
 

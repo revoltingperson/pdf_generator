@@ -4,18 +4,19 @@ from checked_bundle import CheckedButtons
 
 
 class Rotator(CheckedButtons):
-    def __init__(self, controller):
+    def __init__(self, interface, scene):
         super().__init__()
-        self.button = controller.interface.findChild(QAction, 'Custom_rotation')
+        self.scene = scene
+        self.button = interface.custom_rotation
 
-        self.frame = QWidget(controller.view_widget)
+        self.frame = QWidget(scene.view_widget)
         self.new_layout = QHBoxLayout()
         self.frame.setLayout(self.new_layout)
 
         self.spin_box = QSpinBox()
         self.push = QPushButton()
         self.push.setText('Ok')
-        self.push.clicked.connect(lambda rules: controller.transform_image({'custom_rotation': self.spin_box.value()}))
+        self.push.clicked.connect(lambda rules: self.scene.map_pixmap_to_scene({'custom_rotation': self.spin_box.value()}))
         self.spin_box.setMaximum(360)
         self.spin_box.setMinimum(-360)
         self.new_layout.addWidget(self.spin_box)

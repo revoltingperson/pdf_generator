@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from PyQt5 import uic
 from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QAction, QSlider
@@ -5,15 +8,14 @@ from checked_bundle import CheckedButtons
 
 
 class ZoomEnableDisable(CheckedButtons):
-    def __init__(self, controller):
+    def __init__(self, interface, view):
 
         super().__init__()
-        self.frame = QWidget(controller.view_widget)
-        self.view_widget = controller.view_widget
+        self.frame = QWidget(view)
+        self.view_widget = view
         self.horizontal_slider = QSlider(self.frame)
         self.horizontal_slider.valueChanged.connect(lambda change: self.slider_slot(change))
-
-        self.button = controller.interface.findChild(QAction, 'Zoom_In_Out')
+        self.button = interface.zoom_button_in
 
         self.__zoom_in_factor = 1.3
         self.__zoom = 6

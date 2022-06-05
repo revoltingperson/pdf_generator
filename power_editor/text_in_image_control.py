@@ -10,12 +10,12 @@ debug = True
 
 
 class TextItem(CheckedButtons):
-    def __init__(self, controller):
+    def __init__(self, interface, scene):
         super().__init__()
-        self.scene = controller.scene
-        self.button = controller.interface.findChild(QAction, 'Add_Text')
+        self.scene = scene
+        self.button = interface.add_text
 
-    def operate_text_editor(self, event):
+    def create_on_click(self, event):
         position = event.scenePos()
         if self.button.isChecked():
             item = ClickableText(position)
@@ -47,10 +47,10 @@ class ClickableText(QGraphicsRectItem, Serializable):
     width_inner = 80
     height_inner = 35
 
-    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), add_event_handler=False):
+    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), extend_paint=False):
         super().__init__(rect)
 
-        self.optional_action: bool = add_event_handler
+        self.optional_action: bool = extend_paint
         self._initialize_flags()
         self.setPos(position)
         self.setZValue(1)
@@ -93,7 +93,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
         else:
             self.resizer.hide()
         if self.optional_action:
-            self.extend_paint_action()
+            self.extend_paint_action(painter)
 
     @pyqtSlot()
     def resize(self, change):
@@ -119,7 +119,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
             'font': self.input_field.text_edit.currentCharFormat().font().toString()
         }
 
-    def extend_paint_action(self):
+    def extend_paint_action(self, painter):
         pass
 
 

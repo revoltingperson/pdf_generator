@@ -1,12 +1,16 @@
 import typing
-
 import cv2
-
-from power_editor.crop_control import *
-from power_editor.excel_control import ExcelController
-from power_editor.image_editor import ImageEditor
+from checked_bundle import Collector, CheckedButtons
+from crop_control import *
+from excel_control import ExcelControl
+from image_editor import ImageEditor
+from picture_adding import PictureItem
+from resize_control import Resizer
+from rotation_control import Rotator
+from toplevel.brightness import BrightnessWidget
+from zoom_control import ZoomEnableDisable
 from text_in_image_control import TextItem, ClickableText
-
+import numpy as np
 from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsProxyWidget, \
@@ -19,30 +23,35 @@ debug = True
 class MainCanvas(QGraphicsScene, Serializable):
     text_item: TextItem
     cropper: Cropper
-    excel: ExcelController
+    excel: ExcelControl
+    resizer: Resizer
+    rotator: Rotator
+    zoom_control: ZoomEnableDisable
     XY_ZERO = 0
 
-    def __init__(self, graphics_view: QGraphicsView):
+    def __init__(self, interface, graphics_view: QGraphicsView):
         super().__init__()
-
+        self.interface = interface
         self.view_widget = graphics_view
         self.color_image = None
         self.shift_pressed = False
 
         self.editor = ImageEditor(self)
+        self.brightness = BrightnessWidget(self.editor)
         self.view_widget.setScene(self)
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.focusItemChanged.connect(lambda item: self.do_selection_on_focus(item))
         self.__set_placeholder_rectangle()
+        self.__build_scene_control_objects()
 
-    def connect_text_items(self, text_obj):
-        self.text_item = text_obj
-
-    def connect_crop(self, crop_obj):
-        self.cropper = crop_obj
-
-    def connect_excel(self, excel_obj):
-        self.excel = excel_obj
+    def __build_scene_control_objects(self):
+        self.zoom_control = ZoomEnableDisable(self.interface, self.view_widget)
+        self.text_item = TextItem(self.interface, self)
+        self.rotator = Rotator(self.interface, self)
+        self.resizer = Resizer(self.interface, self)
+        self.cropper = Cropper(self.interface, self)
+        self.clickable_image = PictureItem(self.interface, self)
+        self.excel = ExcelControl(self.interface, self)
 
     def __set_placeholder_rectangle(self):
         width = 400
@@ -61,20 +70,36 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
-    def load_image(self, image, rules=None, new_image: bool = False):
+    def convert_raw_to_pixmap(self, image, new_image: bool = False, byte_mode=False):
         if new_image:
             self.color_image = image
         self.remove_pixmap_policy(new_image)
 
+        if byte_mode:
+            read_from_bytes = image.data()
+            img = np.frombuffer(read_from_bytes, dtype='uint8')
+            frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+            self.color_image = frame
+            image = frame
+
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
+        print(frame.strides)
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap().fromImage(q_image)
         if new_image:
             self.editor.base_pixmap = pixmap
-        self.map_pixmap_to_scene(pixmap, rules)
+        return pixmap
 
-    def transform_to_rules(self, pixmap, rules: dict):
+    def convert_qimage_clean(self, image):
+        """ qimage does not destroy the alpha channel, that is why I am not
+            using the convert_raw_to_pixmap func
+        """
+        q_image = QImage(image)
+        pix = QPixmap().fromImage(q_image)
+        return pix
+
+    def transform_to_rules(self, pixmap: QPixmap, rules: dict):
         key, val = list(rules.items())[0]
         self.editor.set_pixmap(pixmap)
         options = {'rotation': self.editor.do_rotation,
@@ -85,18 +110,26 @@ class MainCanvas(QGraphicsScene, Serializable):
         chosen = options.get(key)
         return chosen(val)
 
-    def map_pixmap_to_scene(self, pixmap, rules):
-        print(f"pixmap: {pixmap.size()}")
+    def return_scene_item_as_pixmap(self) -> QPixmap:
+        for item in self.items():
+            if isinstance(item, QGraphicsPixmapItem):
+                return item.pixmap()
+
+    def map_pixmap_to_scene(self, rules, pixmap=None):
+        if pixmap is None:
+            item = self.return_scene_item_as_pixmap()
+            if item:
+                pixmap = item
+
         if rules is not None:
             pixmap = self.transform_to_rules(pixmap, rules)
-
-        print(f"pixmap: {pixmap.size()}")
 
         self.remove_pixmap_policy(new_image=False)
         self.build_border(pixmap.height(), pixmap.width())
         self.addPixmap(pixmap)
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pixmap.width(), pixmap.height())
-        print(f'scene rect: {self.sceneRect()}')
+        if debug: print(f"pixmap: {pixmap.size()}")
+        if debug: print(f'scene rect: {self.sceneRect()}')
 
     def build_border(self, height, width):
         border = BeautifulBorder(width, height)
@@ -114,9 +147,9 @@ class MainCanvas(QGraphicsScene, Serializable):
                 self.removeItem(item)
 
     def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        self.text_item.operate_text_editor(event)
-        self.cropper.operate_crop(event)
-        self.excel.operate_excel(event)
+        self.text_item.create_on_click(event)
+        self.cropper.create_on_click(event)
+        self.excel.create_on_click(event)
 
         if debug:
             print(f'selected items: {self.selectedItems()}')
@@ -131,10 +164,6 @@ class MainCanvas(QGraphicsScene, Serializable):
             self.shift_pressed = True
         super(MainCanvas, self).keyPressEvent(event)
 
-    def keyReleaseEvent(self, event: QKeyEvent) -> None:
-        if event.key() == Qt.Key_Shift:
-            self.shift_pressed = False
-
     def do_selection_on_focus(self, item):
         if debug: print(f'selection changed to {item}')
         if isinstance(item, QGraphicsProxyWidget):
@@ -142,10 +171,9 @@ class MainCanvas(QGraphicsScene, Serializable):
                 [item.setSelected(False) for item in self.selectedItems()]
             item.parentItem().setSelected(True)
 
-    def return_scene_item_as_pixmap(self) -> QPixmap:
-        for item in self.items():
-            if isinstance(item, QGraphicsPixmapItem):
-                return item.pixmap()
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Shift:
+            self.shift_pressed = False
 
     def find_text_items_on_scene(self) -> list:
         items = []
@@ -154,8 +182,7 @@ class MainCanvas(QGraphicsScene, Serializable):
                 items.append(item)
         return items
 
-    def convert_to_bytes(self) -> QByteArray:
-        pixmap = self.return_scene_item_as_pixmap()
+    def convert_to_bytes(self, pixmap) -> QByteArray:
         bites = QByteArray()
         buff = QBuffer(bites)
         buff.open(QIODevice.WriteOnly)
@@ -163,10 +190,11 @@ class MainCanvas(QGraphicsScene, Serializable):
         return bites
 
     def serialize(self):
-        pixmap = self.convert_to_bytes()
+        pixmap = self.return_scene_item_as_pixmap()
+        byte_pixmap = self.convert_to_bytes(pixmap)
         texts = self.find_text_items_on_scene()
         return {
-            'pixmap': str(pixmap, 'ISO-8859-1'),
+            'pixmap': str(byte_pixmap, 'ISO-8859-1'),
             'clickable_text': [item.serialize() for item in texts]
         }
 
@@ -176,7 +204,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        self.map_pixmap_to_scene(pixmap, rules=None)
+        self.map_pixmap_to_scene(rules=None, pixmap=pixmap)
         for item in data['clickable_text']:
             self.text_item.load_from_json(item)
 

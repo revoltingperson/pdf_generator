@@ -1,19 +1,17 @@
 import json
 import os
 
-import numpy
-from PyQt5.QtCore import QThread, pyqtSlot
 from PyQt5.QtGui import QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout
 
-import cv2 as cv
-from image_scene import MainCanvas
+import cv2
+
+from power_editor.image_scene import MainCanvas, Collector
 from interface_setup.interface import Interface
-from main_view import MainView
-from toplevel.excel_control_window import ExcelWindow
+from power_editor.main_view import MainView
+from power_editor.excel_control import ExcelControl
 from toplevel.pdf_dialog import PdfOpener
-from checked_bundle import Holder, Collector
 
 
 class Controller:
@@ -21,22 +19,14 @@ class Controller:
 
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
-        self.__build_checked_button_actions()
 
     def main(self):
         self.interface.main()
 
-    def __build_checked_button_actions(self):
-        self.holder = Holder(self)
-        self.scene.connect_text_items(self.holder.text_item)
-        self.scene.connect_crop(self.holder.cropper)
-        self.scene.connect_excel(self.holder.excel)
-        self.view_widget.connect_zoom_controller(self.holder.zoom_control)
-
     def __set_working_background_to_work_with_graphics(self):
         layout = self.interface.findChild(QVBoxLayout, 'verticalLayout')
         self.view_widget = MainView(layout)
-        self.scene = MainCanvas(self.view_widget)
+        self.scene = MainCanvas(self.interface, self.view_widget)
 
     def tool_bar_checked_buttons(self):
         Collector.verify_only_one_active()
@@ -45,7 +35,6 @@ class Controller:
         box = QMessageBox.question(self.interface, 'Before continuing', 'Would you like to save the current image?',
                                    buttons=QMessageBox.StandardButtons(QMessageBox.Yes | QMessageBox.No))
 
-        self.interface.app.closeAllWindows()
         if box == QMessageBox.Yes:
             self.save_the_image()
         else:
@@ -55,11 +44,11 @@ class Controller:
         """file_name gives back a list"""
         if self.scene.return_scene_item_as_pixmap():
             if not self.prompt_box():
-                self.__help_open_file()
+                self.help_open_file()
         else:
-            self.__help_open_file()
+            self.help_open_file()
 
-    def __help_open_file(self, open_pdf=False):
+    def help_open_file(self, open_pdf=False, clickable_p=False):
         if open_pdf:
             format_to_use = '*.pdf'
         else:
@@ -76,8 +65,11 @@ class Controller:
                 dial.exec()
             if dial.pdf_path is not None:
                 str_path = dial.pdf_path
-            image = cv.imread(str_path)
-            self.scene.load_image(image, new_image=True)
+            if clickable_p:
+                return self.scene.convert_qimage_clean(str_path)
+            image = cv2.imread(str_path)
+            pixmap = self.scene.convert_raw_to_pixmap(image, new_image=True)
+            self.scene.map_pixmap_to_scene(rules=None, pixmap=pixmap)
 
     def save_the_image(self):
         dialog: QFileDialog = QFileDialog()
@@ -92,16 +84,18 @@ class Controller:
             QMessageBox.information(self.interface, 'Message', 'The image was not saved', QMessageBox.Ok)
 
     def open_pdf_file(self):
-        self.__help_open_file(open_pdf=True)
+        self.help_open_file(open_pdf=True)
 
     def print_file(self, excel, pdf_generator=False):
         printer = QPrinter()
+        if pdf_generator:
+            printer.setOutputFileName('name_will_be_replaced')
         if QPrintDialog(printer).exec() == QDialog.Accepted:
             if pdf_generator:
                 for name in excel:
                     head, filename = os.path.split(printer.outputFileName())
                     printer.setOutputFileName(os.path.join(head, name))
-                    self.holder.excel.insert_with_right_format(name)
+                    self.scene.excel.insert_with_right_format(name)
                     self.finish_print(printer)
             else:
                 self.finish_print(printer)
@@ -133,13 +127,14 @@ class Controller:
                 raw_data = json.loads(file.read())
                 self.scene.deserialize(raw_data)
 
+    def open_imposed_picture(self):
+        self.scene.clickable_image.create_item()
+
     def transform_image(self, rules):
-        item = self.scene.return_scene_item_as_pixmap()
-        if item:
-            self.scene.map_pixmap_to_scene(item, rules)
+        self.scene.map_pixmap_to_scene(rules)
 
     def open_brightness_control(self):
-        pass
+        self.scene.brightness.show()
 
     def undo(self):
         pass

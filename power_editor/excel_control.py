@@ -10,7 +10,7 @@ from toplevel.excel_control_window import ExcelWindow
 
 class ExcelItem(ClickableText):
     def __init__(self, position):
-        super().__init__(position, add_event_handler=True)
+        super().__init__(position, extend_paint=True)
         self.input_field.text_edit.setText('Your Excel text will look like this')
         self.input_field.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
         self.input_field.text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -20,7 +20,7 @@ class ExcelItem(ClickableText):
         self.excel_window.window_signal[list].connect(lambda incoming: self.receive_excel_data(incoming))
         self.input_field.text_edit.double_click[bool].connect(lambda x: self.open_close_window(x))
 
-    def extend_paint_action(self):
+    def extend_paint_action(self, painter):
         if not self.isSelected():
             self.excel_window.hide()
 
@@ -41,17 +41,17 @@ class ExcelItem(ClickableText):
         pdf_complete = pyqtSignal(list)
 
 
-class ExcelController(CheckedButtons, QObject):
+class ExcelControl(CheckedButtons, QObject):
     excel_item: ExcelItem
 
-    def __init__(self, controller):
+    def __init__(self, interface, scene):
         super().__init__()
-        self.controller = controller
-        self.scene = controller.scene
-        self.button = controller.interface.findChild(QAction, 'Excel_input')
+        self.controller = interface.controller
+        self.scene = scene
+        self.button = interface.excel_input
         self.format_saved = {}
 
-    def operate_excel(self, event):
+    def create_on_click(self, event):
         position = event.scenePos()
         if self.button.isChecked():
             item = ExcelItem(position)

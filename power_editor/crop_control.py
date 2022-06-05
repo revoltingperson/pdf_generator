@@ -83,12 +83,13 @@ class CropperItem(QGraphicsRectItem):
 class Cropper(CheckedButtons):
     cropper_item: CropperItem
 
-    def __init__(self, controller):
+    def __init__(self, interface, scene):
         super().__init__()
-        self.scene = controller.scene
-        self.button = controller.interface.findChild(QAction, 'Crop')
+        self.interface = interface
+        self.scene = scene
+        self.button = interface.crop
 
-    def operate_crop(self, event: QGraphicsSceneMouseEvent):
+    def create_on_click(self, event: QGraphicsSceneMouseEvent):
         position = event.scenePos()
         if self.button.isChecked():
             self.cropper_item = CropperItem(self, position)
@@ -110,7 +111,12 @@ class Cropper(CheckedButtons):
                                  int(self.cropper_item.rect().height())
                                  )
             cropped_image_to_load = item.copy(area_to_crop)
-            self.scene.map_pixmap_to_scene(cropped_image_to_load, rules=None)
+            pix_as_bytes = self.scene.convert_to_bytes(cropped_image_to_load)
+            pix_from_bites = self.scene.convert_raw_to_pixmap(pix_as_bytes,
+                                             new_image=False,
+                                             byte_mode=True)
+
+            self.scene.map_pixmap_to_scene(rules=None, pixmap=pix_from_bites)
             self.cropper_item.setSelected(False)
 
 

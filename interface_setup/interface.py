@@ -6,7 +6,6 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QDesktopWidget
 
 
-
 class Interface(QMainWindow):
     def __init__(self, controller):
         from power_editor.main_controller import Controller
@@ -38,18 +37,18 @@ class Interface(QMainWindow):
         open_project = self.findChild(QAction, 'Load_project')
         open_project.triggered.connect(self.controller.load_project)
         brightness = self.findChild(QAction, 'Brightness_control')
-        brightness.triggered.connect(lambda comm: self.controller.transform_image(None))
+        brightness.triggered.connect(self.controller.open_brightness_control)
 
         undo = self.findChild(QAction, 'Undo')
         undo.triggered.connect(self.controller.undo)
 
     def __initialize_tool_bar(self):
-        zoom_button_in: QAction = self.findChild(QAction, 'Zoom_In_Out')
-        zoom_button_in.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.zoom_button_in = self.findChild(QAction, 'Zoom_In_Out')
+        self.zoom_button_in.triggered.connect(self.controller.tool_bar_checked_buttons)
         printer = self.findChild(QAction, 'Print')
         printer.triggered.connect(self.controller.print_file)
-        add_text = self.findChild(QAction, 'Add_Text')
-        add_text.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.add_text = self.findChild(QAction, 'Add_Text')
+        self.add_text.triggered.connect(self.controller.tool_bar_checked_buttons)
         rotate_right = self.findChild(QAction, 'Rotate_right')
         rotate_right.triggered.connect(lambda command: self.controller.transform_image({'rotation': 90}))
         rotate_left = self.findChild(QAction, 'Rotate_left')
@@ -58,14 +57,16 @@ class Interface(QMainWindow):
         flip_horizontally.triggered.connect(lambda command: self.controller.transform_image({'flip': (-1, 1)}))
         flip_vertically = self.findChild(QAction, 'Flip_vertically')
         flip_vertically.triggered.connect(lambda command: self.controller.transform_image({'flip': (1, -1)}))
-        custom_rotation = self.findChild(QAction, 'Custom_rotation')
-        custom_rotation.triggered.connect(self.controller.tool_bar_checked_buttons)
-        resize = self.findChild(QAction, 'Resize_image')
-        resize.triggered.connect(self.controller.tool_bar_checked_buttons)
-        crop = self.findChild(QAction, 'Crop')
-        crop.triggered.connect(self.controller.tool_bar_checked_buttons)
-        excel_input = self.findChild(QAction, 'Excel_input')
-        excel_input.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.custom_rotation = self.findChild(QAction, 'Custom_rotation')
+        self.custom_rotation.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.resize = self.findChild(QAction, 'Resize_image')
+        self.resize.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.crop = self.findChild(QAction, 'Crop')
+        self.crop.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.excel_input = self.findChild(QAction, 'Excel_input')
+        self.excel_input.triggered.connect(self.controller.tool_bar_checked_buttons)
+        self.impose_image = self.findChild(QAction, 'Impose_image')
+        self.impose_image.triggered.connect(self.controller.open_imposed_picture)
 
     def __place_app_window_at_screencenter(self):
         desktop = QDesktopWidget().screenGeometry()
@@ -75,4 +76,6 @@ class Interface(QMainWindow):
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         self.controller.prompt_box()
+        self.app.closeAllWindows()
+
 

@@ -4,11 +4,11 @@ from checked_bundle import CheckedButtons
 
 
 class Resizer(CheckedButtons):
-    def __init__(self, controller):
+    def __init__(self, interface, scene):
         super().__init__()
-        self.button = controller.interface.findChild(QAction, 'Resize_image')
-        self.controller = controller
-        self.frame = QWidget(controller.view_widget)
+        self.scene = scene
+        self.button = interface.resize
+        self.frame = QWidget(scene.view_widget)
         self.new_layout = QHBoxLayout()
         self.frame.setLayout(self.new_layout)
 
@@ -19,7 +19,7 @@ class Resizer(CheckedButtons):
         label_x.setText('W:')
         label_y.setText('H:')
         self.push.setText('Ok')
-        self.push.clicked.connect(lambda rules: controller.transform_image({
+        self.push.clicked.connect(lambda rules: self.scene.map_pixmap_to_scene({
             'resize': (self.width_box.value(), self.height_box.value())}))
         self.width_box.setMaximum(9999)
         self.height_box.setMaximum(9999)
@@ -35,7 +35,7 @@ class Resizer(CheckedButtons):
 
     def activate(self):
         self.last_active = True
-        item = self.controller.scene.return_scene_item_as_pixmap()
+        item = self.scene.return_scene_item_as_pixmap()
         if item:
             self.width_box.setValue(item.width())
             self.height_box.setValue(item.height())
