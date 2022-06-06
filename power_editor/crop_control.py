@@ -85,7 +85,6 @@ class Cropper(CheckedButtons):
 
     def __init__(self, interface, scene):
         super().__init__()
-        self.interface = interface
         self.scene = scene
         self.button = interface.crop
 
@@ -111,12 +110,7 @@ class Cropper(CheckedButtons):
                                  int(self.cropper_item.rect().height())
                                  )
             cropped_image_to_load = item.copy(area_to_crop)
-            pix_as_bytes = self.scene.convert_to_bytes(cropped_image_to_load)
-            pix_from_bites = self.scene.convert_raw_to_pixmap(pix_as_bytes,
-                                             new_image=False,
-                                             byte_mode=True)
-
-            self.scene.map_pixmap_to_scene(rules=None, pixmap=pix_from_bites)
+            self.scene.map_pixmap_to_scene(pixmap=cropped_image_to_load, rules=None)
             self.cropper_item.setSelected(False)
 
 

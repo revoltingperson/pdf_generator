@@ -10,7 +10,7 @@ from rotation_control import Rotator
 from toplevel.brightness import BrightnessWidget
 from zoom_control import ZoomEnableDisable
 from text_in_image_control import TextItem, ClickableText
-import numpy as np
+
 from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsProxyWidget, \
@@ -70,21 +70,16 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
-    def convert_raw_to_pixmap(self, image, new_image: bool = False, byte_mode=False):
-        if new_image:
-            self.color_image = image
+    def convert_raw_to_pixmap(self, image, new_image: bool = False):
         self.remove_pixmap_policy(new_image)
-
-        if byte_mode:
-            read_from_bytes = image.data()
-            img = np.frombuffer(read_from_bytes, dtype='uint8')
-            frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
-            self.color_image = frame
-            image = frame
-
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
-        print(frame.strides)
+
+        if new_image:
+            self.color_image = image
+            self.editor.set_to_default()
+            self.editor.last_size = (width, height)
+
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap().fromImage(q_image)
         if new_image:
@@ -102,12 +97,17 @@ class MainCanvas(QGraphicsScene, Serializable):
     def transform_to_rules(self, pixmap: QPixmap, rules: dict):
         key, val = list(rules.items())[0]
         self.editor.set_pixmap(pixmap)
+        if debug: print(f'{pixmap.size()} from transformation function')
         options = {'rotation': self.editor.do_rotation,
                    'custom_rotation': self.editor.do_custom_rotation,
                    'flip': self.editor.do_flip,
                    'resize': self.editor.resize
                    }
+        # copy pixmap when it is not custom rotation
+        # this will be the base for all transformations
+        # when custom rotation -> use base pixmap
         chosen = options.get(key)
+        # noinspection PyArgumentList
         return chosen(val)
 
     def return_scene_item_as_pixmap(self) -> QPixmap:
@@ -115,7 +115,7 @@ class MainCanvas(QGraphicsScene, Serializable):
             if isinstance(item, QGraphicsPixmapItem):
                 return item.pixmap()
 
-    def map_pixmap_to_scene(self, rules, pixmap=None):
+    def map_pixmap_to_scene(self, rules=None, pixmap=None):
         if pixmap is None:
             item = self.return_scene_item_as_pixmap()
             if item:
@@ -128,8 +128,8 @@ class MainCanvas(QGraphicsScene, Serializable):
         self.build_border(pixmap.height(), pixmap.width())
         self.addPixmap(pixmap)
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pixmap.width(), pixmap.height())
-        if debug: print(f"pixmap: {pixmap.size()}")
-        if debug: print(f'scene rect: {self.sceneRect()}')
+        if debug: print(f"pixmap in map_pixmap: {pixmap.size()}")
+        if debug: print(f'scene rect in map_pixmap: {self.sceneRect()}')
 
     def build_border(self, height, width):
         border = BeautifulBorder(width, height)
