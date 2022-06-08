@@ -67,6 +67,8 @@ class Interface(QMainWindow):
         self.excel_input.triggered.connect(self.controller.tool_bar_checked_buttons)
         self.impose_image = self.findChild(QAction, 'Impose_image')
         self.impose_image.triggered.connect(self.controller.open_imposed_picture)
+        greyscale = self.findChild(QAction, 'Grey_filter')
+        greyscale.triggered.connect(self.controller.make_image_grey)
 
     def __place_app_window_at_screencenter(self):
         desktop = QDesktopWidget().screenGeometry()

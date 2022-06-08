@@ -176,7 +176,6 @@
      <string>Image</string>
     </property>
     <addaction name="Grey_filter"/>
-    <addaction name="Color_channels"/>
     <addaction name="Brightness_control"/>
    </widget>
    <addaction name="menuFiles"/>
@@ -460,14 +459,14 @@
     <string>Grey filter</string>
    </property>
   </action>
-  <action name="Color_channels">
+  <action name="Add_blur">
    <property name="text">
-    <string>Color channels</string>
+    <string>Add blur</string>
    </property>
   </action>
   <action name="Brightness_control">
    <property name="text">
-    <string>Brightness control</string>
+    <string>Color and blur</string>
    </property>
   </action>
   <action name="Custom_rotation">

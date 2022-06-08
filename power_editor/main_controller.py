@@ -68,8 +68,7 @@ class Controller:
             if clickable_p:
                 return self.scene.convert_qimage_clean(str_path)
             image = cv2.imread(str_path)
-            pixmap = self.scene.convert_raw_to_pixmap(image, new_image=True)
-            self.scene.map_pixmap_to_scene(rules=None, pixmap=pixmap)
+            self.scene.load_new_image(image)
 
     def save_the_image(self):
         dialog: QFileDialog = QFileDialog()
@@ -131,10 +130,13 @@ class Controller:
         self.scene.clickable_image.create_item()
 
     def transform_image(self, rules):
-        self.scene.map_pixmap_to_scene(rules)
+        self.scene.map_pixmap_to_scene(rules=rules)
 
     def open_brightness_control(self):
         self.scene.brightness.show()
+
+    def make_image_grey(self):
+        self.scene.editor.turn_to_greyscale()
 
     def undo(self):
         pass

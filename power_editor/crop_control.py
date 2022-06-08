@@ -110,7 +110,7 @@ class Cropper(CheckedButtons):
                                  int(self.cropper_item.rect().height())
                                  )
             cropped_image_to_load = item.copy(area_to_crop)
-            self.scene.map_pixmap_to_scene(pixmap=cropped_image_to_load, rules=None)
+            self.scene.map_pixmap_to_scene(pixmap=cropped_image_to_load, cropped=True)
             self.cropper_item.setSelected(False)
 
 

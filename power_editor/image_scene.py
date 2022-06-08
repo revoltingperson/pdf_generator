@@ -1,5 +1,7 @@
 import typing
 import cv2
+import numpy as np
+
 from checked_bundle import Collector, CheckedButtons
 from crop_control import *
 from excel_control import ExcelControl
@@ -7,17 +9,17 @@ from image_editor import ImageEditor
 from picture_adding import PictureItem
 from resize_control import Resizer
 from rotation_control import Rotator
-from toplevel.brightness import BrightnessWidget
+from toplevel.visual_effects import BrightnessWidget
 from zoom_control import ZoomEnableDisable
 from text_in_image_control import TextItem, ClickableText
 
 from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
-from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform
+from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform, QPaintDevice
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsProxyWidget, \
     QGraphicsRectItem, QWidget, QGraphicsPixmapItem
 from serializer.serializer import Serializable
 
-debug = True
+debug = False
 
 
 class MainCanvas(QGraphicsScene, Serializable):
@@ -33,8 +35,8 @@ class MainCanvas(QGraphicsScene, Serializable):
         super().__init__()
         self.interface = interface
         self.view_widget = graphics_view
-        self.color_image = None
         self.shift_pressed = False
+        self.black_back = QRectF()
 
         self.editor = ImageEditor(self)
         self.brightness = BrightnessWidget(self.editor)
@@ -60,6 +62,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         pen = QPen(Qt.SolidLine)
         brush = QBrush(QColor(rgb_white, rgb_white, rgb_white, rgb_white))
         rect_item = QRectF(self.XY_ZERO, self.XY_ZERO, width, height)
+        self.black_back = rect_item
         self.setSceneRect(self.XY_ZERO, self.XY_ZERO, width, height)
         self.addRect(rect_item, pen, brush)
 
@@ -70,20 +73,23 @@ class MainCanvas(QGraphicsScene, Serializable):
         painter.end()
         image.save(where)
 
+    def load_new_image(self, image):
+        pixmap = self.convert_raw_to_pixmap(image, new_image=True)
+        self.remove_pixmap_policy(new_image=True)
+        self.map_pixmap_to_scene(pixmap=pixmap, rules=None)
+        self.editor.set_transform_pix(pixmap)
+
     def convert_raw_to_pixmap(self, image, new_image: bool = False):
-        self.remove_pixmap_policy(new_image)
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
 
         if new_image:
-            self.color_image = image
+            self.editor.set_color_mask(image)
             self.editor.set_to_default()
-            self.editor.last_size = (width, height)
 
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap().fromImage(q_image)
-        if new_image:
-            self.editor.base_pixmap = pixmap
+
         return pixmap
 
     def convert_qimage_clean(self, image):
@@ -94,19 +100,16 @@ class MainCanvas(QGraphicsScene, Serializable):
         pix = QPixmap().fromImage(q_image)
         return pix
 
-    def transform_to_rules(self, pixmap: QPixmap, rules: dict):
+    def transform_to_rules(self, rules: dict):
         key, val = list(rules.items())[0]
-        self.editor.set_pixmap(pixmap)
-        if debug: print(f'{pixmap.size()} from transformation function')
+
         options = {'rotation': self.editor.do_rotation,
-                   'custom_rotation': self.editor.do_custom_rotation,
                    'flip': self.editor.do_flip,
                    'resize': self.editor.resize
                    }
-        # copy pixmap when it is not custom rotation
-        # this will be the base for all transformations
-        # when custom rotation -> use base pixmap
+
         chosen = options.get(key)
+        self.editor.set_color_mask(None)
         # noinspection PyArgumentList
         return chosen(val)
 
@@ -115,21 +118,53 @@ class MainCanvas(QGraphicsScene, Serializable):
             if isinstance(item, QGraphicsPixmapItem):
                 return item.pixmap()
 
-    def map_pixmap_to_scene(self, rules=None, pixmap=None):
-        if pixmap is None:
-            item = self.return_scene_item_as_pixmap()
-            if item:
-                pixmap = item
+    def map_pixmap_to_scene(self, pixmap=None, rules=None, cropped=False):
+        pixmap_to_show = pixmap
+        if cropped and self.editor.transformation_pixmap.isNull():
+            return
+        elif cropped:
+            self.editor.set_transform_pix(pixmap)
 
         if rules is not None:
-            pixmap = self.transform_to_rules(pixmap, rules)
+            key, val = list(rules.items())[0]
+            if key == 'custom_rotation':
+                pixmap_to_show = self.editor.do_custom_rotation(val)
+            else:
+                pixmap_to_show = self.transform_to_rules(rules)
+                self.editor.set_transform_pix(pixmap_to_show)
+                pixmap_to_show = self.editor.do_rotation(post_trans_pix=pixmap_to_show)
 
         self.remove_pixmap_policy(new_image=False)
-        self.build_border(pixmap.height(), pixmap.width())
-        self.addPixmap(pixmap)
-        self.setSceneRect(self.XY_ZERO, self.XY_ZERO, pixmap.width(), pixmap.height())
-        if debug: print(f"pixmap in map_pixmap: {pixmap.size()}")
-        if debug: print(f'scene rect in map_pixmap: {self.sceneRect()}')
+        self.build_border(pixmap_to_show.height(), pixmap_to_show.width())
+        self.addPixmap(pixmap_to_show)
+        scene_rect = QRectF(self.XY_ZERO, self.XY_ZERO, pixmap_to_show.width(), pixmap_to_show.height())
+        self.black_back = scene_rect
+        self.setSceneRect(scene_rect)
+        print(self.editor.transformation_pixmap)
+        if self.editor.color_mask_clean is None \
+                and not self.editor.transformation_pixmap.isNull():
+            self.create_new_color_mask_after_transform()
+            self.editor.restore_values()
+        elif cropped:
+            self.create_new_color_mask_after_transform()
+            self.editor.set_to_default()
+
+        if debug:
+            print(f"pixmap in map_pixmap: {pixmap_to_show.size()}")
+        if debug:
+            print(f'scene rect in map_pixmap: {self.sceneRect()}')
+
+    def drawBackground(self, painter, rect) -> None:
+        painter.setBrush(Qt.black)
+        painter.drawRect(self.black_back)
+
+    def create_new_color_mask_after_transform(self):
+        pixmap = self.return_scene_item_as_pixmap()
+        byte = self.convert_to_bytes(pixmap)
+        read_from_bytes = byte.data()
+        img = np.frombuffer(read_from_bytes, dtype='uint8')
+        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+        self.editor.set_color_mask(frame)
 
     def build_border(self, height, width):
         border = BeautifulBorder(width, height)
@@ -204,7 +239,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        self.map_pixmap_to_scene(rules=None, pixmap=pixmap)
+        self.map_pixmap_to_scene(pixmap=pixmap, rules=None)
         for item in data['clickable_text']:
             self.text_item.load_from_json(item)
 

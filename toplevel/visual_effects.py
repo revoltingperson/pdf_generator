@@ -14,11 +14,18 @@ class BrightnessWidget(QWidget):
         path = Path.cwd().parent.joinpath('ui', 'brightness_filter.ui')
         uic.loadUi(path, self)
         self.brightness: QSlider = self.findChild(QSlider, 'brightness_slider')
-        self.brightness.valueChanged.connect(lambda val: self.editor.changed_brightness(val))
-
+        self.brightness.valueChanged.connect(lambda val: self.editor.change_brightness(val))
         self.gamma = self.findChild(QSlider, 'gamma_slider')
-        # self.gamma.valueChanged.connect(lambda val: editor.gamma_changed(val))
+        self.gamma.valueChanged.connect(lambda val: self.editor.change_gamma(val))
+        self.blur = self.findChild(QSlider, 'blur')
+        self.blur.valueChanged.connect(lambda val: self.editor.add_blur(val))
+
+        self.brightness.sliderMoved.connect(self.restore_values)
         self.setWindowFlag(Qt.Window)
+
+    def restore_values(self):
+        print('moved function')
+
 
 
 

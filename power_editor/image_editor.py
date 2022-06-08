@@ -1,104 +1,111 @@
 import cv2
 import imutils as imutils
+import numpy as np
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTransform, QPixmap
 
-# raw_image ->
+
+# custom rotation -> use pixitem from scene -> save rotation -> apply when pix_mask moves around
+
+# raw -> transformation pixmap saved
+
+# transform command> transformation pixmap changed as needed -> clone it[pix_to_show]
+# -> display_pixmap[pix_to_show] -> convert it to bytes -> save as color_mask
+# COLORS
+# color_mask-> apply filter -> save filter numbers ->
+# -> raw (flag as not new)-> only pix_to_show created -> display
 
 class ImageEditor:
-    last_rotation = 0
     last_custom_rot = 0
     last_brightness = 0
-    flipped_x = 1
-    flipped_y = 1
-    last_size: tuple
+    last_gamma = 10
+    last_blur = 1
 
     def __init__(self, scene):
-        self.to_restore = None
         self.scene = scene
-        self.edited = None
-        self.pixmap = None
-        self.restore = False
-        self.base_pixmap = None
 
+        self.color_mask_clean = None
+        self.color_mask_active = None
+        self.transformation_pixmap = QPixmap()
+
+    # turn to property after finish
     def set_to_default(self):
-        self.last_rotation = 0
-        self.last_custom_rot = 0
         self.last_brightness = 0
-        self.flipped_x = 1
-        self.flipped_y = 1
+        self.last_custom_rot = 0
+        self.last_gamma = 10
 
-    def set_pixmap(self, pix):
-        self.pixmap = pix
+    def set_transform_pix(self, pix):
+        self.transformation_pixmap = pix
 
-    def do_rotation(self, degree):
-        if not self.restore:
-            add = self.last_rotation + degree
-            self.last_rotation = add if degree % 90 == 0 else self.last_rotation
+    def set_color_mask(self, image):
+        self.color_mask_clean = image
 
-        rotated = self.pixmap.transformed(QTransform().rotate(degree))
-        print(self.last_size)
-        print(self.last_rotation)
+    def do_rotation(self, degree=0, post_trans_pix=None):
+        if post_trans_pix:
+            rotated = post_trans_pix.transformed(QTransform().rotate(degree+self.last_custom_rot), mode=Qt.SmoothTransformation)
+        else:
+            rotated = self.transformation_pixmap.transformed(QTransform().rotate(degree))
         return rotated
 
     def do_custom_rotation(self, degree):
-        if not self.restore:
-            self.last_custom_rot = degree
-
-        self.pixmap = self.base_pixmap
-        print(self.pixmap.size())
+        self.last_custom_rot = degree
         return self.do_rotation(degree)
 
     def do_flip(self, pack):
         x, y = pack
-        if not self.restore:
-            self.flipped_x = self.check_flipped(x, self.flipped_x)
-            self.flipped_y = self.check_flipped(y, self.flipped_y)
-
-        flipped = self.pixmap.transformed(QTransform().scale(x, y))
+        flipped = self.transformation_pixmap.transformed(QTransform().scale(x, y))
         return flipped
-
-    def check_flipped(self, axis, my_var):
-        if axis < 0 and my_var < 0:
-            return 1
-        elif axis < 0:
-            return axis
-        else:
-            return my_var
 
     def resize(self, size):
         w, h = size
-        scaled = self.pixmap.scaled(w, h)
-
-        if not self.restore:
-            self.last_size = size
-            self.base_pixmap = scaled
+        scaled = self.transformation_pixmap.scaled(w, h)
         return scaled
 
-    def refresh_data(self, pixmap):
-        self.to_restore = [{'resize': self.last_size},
-                           {'rotation': self.last_rotation + self.last_custom_rot},
-                           {'flip': (self.flipped_x, self.flipped_y)}
-                           ]
-        self.restore = True
+    def is_mask_none(self):
+        if self.color_mask_clean is None:
+            return True
+        return False
 
-        for transformation in self.to_restore:
-            self.scene.map_pixmap_to_scene(pixmap=pixmap, rules=transformation)
-            pixmap = self.scene.return_scene_item_as_pixmap()
+    def change_brightness(self, value):
+        if not self.is_mask_none():
+            hsv = cv2.cvtColor(self.color_mask_clean, cv2.COLOR_BGR2HSV)
+            self.last_brightness = value
+            h, s, v = cv2.split(hsv)
+            lim = 255 - value
+            v[v > lim] = 255
+            v[v <= lim] += value
+            final_hsv = cv2.merge((h, s, v))
+            img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+            self.set_image_to_canvas(img)
 
-        self.restore = False
-
-    def changed_brightness(self, value):
-        hsv = cv2.cvtColor(self.scene.color_image, cv2.COLOR_BGR2HSV)
-        self.last_brightness = value
-        h, s, v = cv2.split(hsv)
-        lim = 255 - value
-        v[v > lim] = 255
-        v[v <= lim] += value
-        final_hsv = cv2.merge((h, s, v))
-        img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    def set_image_to_canvas(self, img):
         pixmap = self.scene.convert_raw_to_pixmap(img)
-        print(self.to_restore)
-        self.refresh_data(pixmap)
+        self.scene.map_pixmap_to_scene(pixmap=pixmap)
 
-    def gamma_changed(self, value):
-        value = value / 10
+    def change_gamma(self, value):
+        if not self.is_mask_none():
+            self.last_gamma = value
+            gamma = 1/(value / 10)
+
+            table = np.array([((i / 255.0) ** gamma) * 255
+                              for i in np.arange(0, 256)]).astype("uint8")
+            image = cv2.LUT(self.color_mask_clean, table)
+            self.set_image_to_canvas(image)
+
+    def turn_to_greyscale(self):
+        if not self.is_mask_none():
+            gray = cv2.cvtColor(self.color_mask_clean, cv2.COLOR_BGR2GRAY)
+            self.set_image_to_canvas(gray)
+
+    def add_blur(self, val):
+        if not self.is_mask_none():
+            if val < 1:
+                val = 1
+            self.last_blur = val
+            blur = cv2.blur(self.color_mask_clean, (val, val))
+            self.set_image_to_canvas(blur)
+
+    def restore_values(self):
+        self.change_brightness(self.last_brightness)
+        self.change_gamma(self.last_gamma)
+        self.add_blur(self.last_blur)
