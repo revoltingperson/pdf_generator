@@ -20,12 +20,12 @@ class ImageEditor:
     last_brightness = 0
     last_gamma = 10
     last_blur = 1
+    grey = False
 
     def __init__(self, scene):
         self.scene = scene
 
-        self.color_mask_clean = None
-        self.color_mask_active = None
+        self.color_mask = None
         self.transformation_pixmap = QPixmap()
 
     # turn to property after finish
@@ -38,7 +38,7 @@ class ImageEditor:
         self.transformation_pixmap = pix
 
     def set_color_mask(self, image):
-        self.color_mask_clean = image
+        self.color_mask = image
 
     def do_rotation(self, degree=0, post_trans_pix=None):
         if post_trans_pix:
@@ -62,50 +62,66 @@ class ImageEditor:
         return scaled
 
     def is_mask_none(self):
-        if self.color_mask_clean is None:
+        if self.color_mask is None:
             return True
         return False
 
-    def change_brightness(self, value):
+    def last_bright_val(self, value):
+        self.last_brightness = value
+
+    def set_last_gamma(self, value):
+        self.last_gamma = value
+
+    def set_last_blur(self, value):
+        self.last_blur = value
+
+    def change_brightness(self, in_img, value):
         if not self.is_mask_none():
-            hsv = cv2.cvtColor(self.color_mask_clean, cv2.COLOR_BGR2HSV)
-            self.last_brightness = value
+            hsv = cv2.cvtColor(in_img, cv2.COLOR_BGR2HSV)
             h, s, v = cv2.split(hsv)
             lim = 255 - value
             v[v > lim] = 255
             v[v <= lim] += value
             final_hsv = cv2.merge((h, s, v))
             img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
-            self.set_image_to_canvas(img)
+            return img
 
     def set_image_to_canvas(self, img):
         pixmap = self.scene.convert_raw_to_pixmap(img)
         self.scene.map_pixmap_to_scene(pixmap=pixmap)
 
-    def change_gamma(self, value):
+    def change_gamma(self, in_img, value):
         if not self.is_mask_none():
-            self.last_gamma = value
             gamma = 1/(value / 10)
 
             table = np.array([((i / 255.0) ** gamma) * 255
                               for i in np.arange(0, 256)]).astype("uint8")
-            image = cv2.LUT(self.color_mask_clean, table)
-            self.set_image_to_canvas(image)
+            image = cv2.LUT(in_img, table)
+            return image
 
     def turn_to_greyscale(self):
         if not self.is_mask_none():
-            gray = cv2.cvtColor(self.color_mask_clean, cv2.COLOR_BGR2GRAY)
-            self.set_image_to_canvas(gray)
+            if not self.grey:
+                self.grey = True
+            else:
+                self.grey = False
+        self.set_all_filters()
 
-    def add_blur(self, val):
+    def apply_greyscale(self, img):
+        if self.grey:
+            grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            return grey
+
+    def add_blur(self, in_img, val):
         if not self.is_mask_none():
             if val < 1:
                 val = 1
-            self.last_blur = val
-            blur = cv2.blur(self.color_mask_clean, (val, val))
-            self.set_image_to_canvas(blur)
+            blur = cv2.blur(in_img, (val, val))
+            return blur
 
-    def restore_values(self):
-        self.change_brightness(self.last_brightness)
-        self.change_gamma(self.last_gamma)
-        self.add_blur(self.last_blur)
+    def set_all_filters(self):
+        img = self.change_brightness(self.color_mask, self.last_brightness)
+        gam_img = self.change_gamma(img, self.last_gamma)
+        grey = self.apply_greyscale(gam_img)
+        out = self.add_blur(grey, self.last_blur)
+        self.set_image_to_canvas(out)

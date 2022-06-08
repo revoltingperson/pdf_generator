@@ -7,6 +7,7 @@ from crop_control import *
 from excel_control import ExcelControl
 from image_editor import ImageEditor
 from picture_adding import PictureItem
+from power_editor.scene_history_stack import HistoryStack
 from resize_control import Resizer
 from rotation_control import Rotator
 from toplevel.visual_effects import BrightnessWidget
@@ -39,6 +40,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         self.black_back = QRectF()
 
         self.editor = ImageEditor(self)
+        self.history = HistoryStack()
         self.brightness = BrightnessWidget(self.editor)
         self.view_widget.setScene(self)
         self.view_widget.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -105,7 +107,8 @@ class MainCanvas(QGraphicsScene, Serializable):
 
         options = {'rotation': self.editor.do_rotation,
                    'flip': self.editor.do_flip,
-                   'resize': self.editor.resize
+                   'resize': self.editor.resize,
+                   'custom_rotation': self.editor.do_custom_rotation
                    }
 
         chosen = options.get(key)
@@ -128,7 +131,7 @@ class MainCanvas(QGraphicsScene, Serializable):
         if rules is not None:
             key, val = list(rules.items())[0]
             if key == 'custom_rotation':
-                pixmap_to_show = self.editor.do_custom_rotation(val)
+                pixmap_to_show = self.transform_to_rules(rules)
             else:
                 pixmap_to_show = self.transform_to_rules(rules)
                 self.editor.set_transform_pix(pixmap_to_show)
@@ -140,19 +143,22 @@ class MainCanvas(QGraphicsScene, Serializable):
         scene_rect = QRectF(self.XY_ZERO, self.XY_ZERO, pixmap_to_show.width(), pixmap_to_show.height())
         self.black_back = scene_rect
         self.setSceneRect(scene_rect)
-        print(self.editor.transformation_pixmap)
-        if self.editor.color_mask_clean is None \
-                and not self.editor.transformation_pixmap.isNull():
-            self.create_new_color_mask_after_transform()
-            self.editor.restore_values()
-        elif cropped:
-            self.create_new_color_mask_after_transform()
-            self.editor.set_to_default()
+        self.post_transform(cropped)
 
         if debug:
             print(f"pixmap in map_pixmap: {pixmap_to_show.size()}")
         if debug:
             print(f'scene rect in map_pixmap: {self.sceneRect()}')
+
+    def post_transform(self, cropped):
+        if self.editor.color_mask is None \
+                and not self.editor.transformation_pixmap.isNull():
+            self.create_new_color_mask_after_transform()
+            self.editor.set_all_filters()
+
+        elif cropped:
+            self.create_new_color_mask_after_transform()
+            self.editor.set_to_default()
 
     def drawBackground(self, painter, rect) -> None:
         painter.setBrush(Qt.black)

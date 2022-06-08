@@ -10,7 +10,6 @@ import cv2
 from power_editor.image_scene import MainCanvas, Collector
 from interface_setup.interface import Interface
 from power_editor.main_view import MainView
-from power_editor.excel_control import ExcelControl
 from toplevel.pdf_dialog import PdfOpener
 
 
