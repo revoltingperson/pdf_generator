@@ -1,16 +1,19 @@
 from string import Template
 
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QObject, QRectF
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QAction
 from checked_bundle import CheckedButtons
-from text_in_image_control import ClickableText
+from text_in_image_control import ClickableText, TextItem
 from toplevel.excel_control_window import ExcelWindow
 
 
 class ExcelItem(ClickableText):
-    def __init__(self, position):
-        super().__init__(position, extend_paint=True)
+    width_inner = 150
+    height_inner = 50
+
+    def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
+        super().__init__(position, rect, extend_paint=True)
         self.input_field.text_edit.setText('Your Excel text will look like this')
         self.input_field.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
         self.input_field.text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -66,10 +69,15 @@ class ExcelControl(CheckedButtons, QObject):
         self.format_saved = self.excel_item.serialize()
 
     def remove_old_instance(self):
+        excel = self.find_excel()
+        if excel:
+            excel.excel_window.destroy()
+            self.scene.removeItem(excel)
+
+    def find_excel(self):
         for scene_item in self.scene.items():
             if scene_item.__class__ == ExcelItem:
-                scene_item.excel_window.destroy()
-                self.scene.removeItem(scene_item)
+                return scene_item
 
     @pyqtSlot(list)
     def send_to_scene(self, excel):
@@ -89,5 +97,9 @@ class ExcelControl(CheckedButtons, QObject):
         formatted = set_c.safe_substitute(r=r, g=g, b=b)
         self.excel_item.input_field.text_edit.setStyleSheet(formatted)
 
+    def call_json_loader(self, data):
+        item_ready = self.load_from_json(ExcelItem, data['item'])
+        item_ready.excel_window.deserialize(data['window'])
+        self.scene.addItem(item_ready)
 
 

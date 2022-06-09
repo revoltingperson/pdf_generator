@@ -19,7 +19,7 @@ class Resizer(CheckedButtons):
         label_x.setText('W:')
         label_y.setText('H:')
         self.push.setText('Ok')
-        self.push.clicked.connect(lambda rules: self.scene.map_pixmap_to_scene(rules={
+        self.push.clicked.connect(lambda rules: self.scene.send_transformation({
             'resize': (self.width_box.value(), self.height_box.value())}))
         self.width_box.setMaximum(9999)
         self.height_box.setMaximum(9999)

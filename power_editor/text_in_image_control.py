@@ -23,23 +23,8 @@ class TextItem(CheckedButtons):
             self.scene.addItem(item)
             item.setSelected(True)
 
-    def load_from_json(self, data):
-        wid, height = data['width'], data['height']
-        x, y = data['position'][0], data['position'][1]
-        text = data['text']
-        r, g, b, a = data['color']
-        font = data['font']
-        split_font = font.split(',')
-        family, size, weight, italics = split_font[0], split_font[1], split_font[4], split_font[5]
-        position = QPointF(x, y)
-        item = ClickableText(position, rect=QRectF(0, 0, float(wid), float(height)))
-
-        item.input_field.text_edit.setText(text)
-        item.input_field.text_edit.setFont(QFont(family, int(size), int(weight), int(italics)))
-        set_c = Template("QTextEdit {color: rgb($r, $g, $b);}")
-        formatted = set_c.safe_substitute(r=r, g=g, b=b)
-        item.input_field.text_edit.setStyleSheet(formatted)
-
+    def call_json_loader(self, data):
+        item = self.load_from_json(ClickableText, data)
         self.scene.addItem(item)
 
 
@@ -49,6 +34,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), extend_paint=False):
         super().__init__(rect)
+        self.id = id(self)
 
         self.optional_action: bool = extend_paint
         self._initialize_flags()
@@ -64,6 +50,8 @@ class ClickableText(QGraphicsRectItem, Serializable):
         self.input_field = InputFields()
         self.content = QGraphicsProxyWidget(self)
         self.initialize_input()
+
+
 
     def _initialize_flags(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -111,6 +99,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
 
     def serialize(self):
         return {
+            'id': self.id,
             'width': self.rect().width(),
             'height': self.rect().height(),
             'position': (self.pos().x(), self.pos().y()),

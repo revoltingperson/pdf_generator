@@ -6,8 +6,10 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QPushButton, QSpinBox, QLabel, QFileDialog, QComboBox, QTabWidget
 from openpyxl import load_workbook, Workbook
 
+from serializer.serializer import Serializable
 
-class ExcelWindow(QWidget):
+
+class ExcelWindow(QWidget, Serializable):
     opened_excel: Workbook
     window_signal = pyqtSignal(list)
 
@@ -34,14 +36,20 @@ class ExcelWindow(QWidget):
         self.tab_wid: QTabWidget = self.findChild(QTabWidget, 'tabWidget')
         self.data_preview = self.findChild(QLabel, 'Displayed_data')
         self.tab_wid.setTabEnabled(1, False)
+        self.path_to_remember = ""
 
     def open_file(self):
         file, _ = QFileDialog.getOpenFileNames(None, 'Open File', os.path.abspath(__name__),
                                                "Image Files(*.xlsx)")
         if file:
-            head, file_name = os.path.split(file[0])
+            self.path_to_remember = file[0]
+            self.extract_file_name(file[0])
+
+    def extract_file_name(self, file):
+        if file != "":
+            head, file_name = os.path.split(file)
             self.filename.setText(file_name)
-            self.opened_excel = load_workbook(file[0])
+            self.opened_excel = load_workbook(file)
             names = self.opened_excel.sheetnames
             self.sheets.addItems(names)
             self.tab_wid.setTabEnabled(1, True)
@@ -70,8 +78,8 @@ class ExcelWindow(QWidget):
             self.col_end.setValue(self.col_start.value())
 
     def spin_clicked(self):
+        self.carry_out_safety_check()
         if hasattr(self, 'opened_excel'):
-            self.carry_out_safety_check()
             self.display_how_many()
             data = self.extract_data_from_pdfs()
             self.data_preview.setText('\n'.join(data))
@@ -83,3 +91,18 @@ class ExcelWindow(QWidget):
     def generate_pdfs(self):
         data = self.extract_data_from_pdfs()
         self.window_signal[list].emit(data)
+
+    def serialize(self):
+        return {
+            'file_path': self.path_to_remember,
+            'columns': (self.col_start.value(), self.col_end.value()),
+            'rows': (self.row_start.value(), self.row_end.value())
+        }
+
+    def deserialize(self, data):
+        self.extract_file_name(data['file_path'])
+        self.path_to_remember = data['file_path']
+        self.col_start.setValue(data['columns'][0])
+        self.col_end.setValue(data['columns'][1])
+        self.row_start.setValue(data['rows'][0])
+        self.row_end.setValue(data['rows'][1])

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>944</width>
-    <height>818</height>
+    <height>817</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -345,7 +345,7 @@
   </action>
   <action name="Print">
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-print-80.png</normaloff>:/icons/icons8-print-80.png</iconset>
    </property>
    <property name="text">
@@ -357,7 +357,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-text-box-80.png</normaloff>:/icons/icons8-text-box-80.png</iconset>
    </property>
    <property name="text">
@@ -393,7 +393,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-zoom-in-80.png</normaloff>:/icons/icons8-zoom-in-80.png</iconset>
    </property>
    <property name="text">
@@ -410,7 +410,7 @@
   </action>
   <action name="Rotate_right">
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-rotate-right-80.png</normaloff>:/icons/icons8-rotate-right-80.png</iconset>
    </property>
    <property name="text">
@@ -419,7 +419,7 @@
   </action>
   <action name="Rotate_left">
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-rotate-left-80.png</normaloff>:/icons/icons8-rotate-left-80.png</iconset>
    </property>
    <property name="text">
@@ -428,7 +428,7 @@
   </action>
   <action name="Flip_horizontally">
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-flip-horizontal-80.png</normaloff>:/icons/icons8-flip-horizontal-80.png</iconset>
    </property>
    <property name="text">
@@ -437,7 +437,7 @@
   </action>
   <action name="Flip_vertically">
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-flip-vertical-80.png</normaloff>:/icons/icons8-flip-vertical-80.png</iconset>
    </property>
    <property name="text">
@@ -474,7 +474,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/newPrefix/icons8-circled-notch-80.png</normaloff>:/newPrefix/icons8-circled-notch-80.png</iconset>
    </property>
    <property name="text">
@@ -486,7 +486,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/newPrefix/icons8-select-all-80.png</normaloff>:/newPrefix/icons8-select-all-80.png</iconset>
    </property>
    <property name="text">
@@ -498,7 +498,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/newPrefix/icons8-xlarge-icons-80.png</normaloff>:/newPrefix/icons8-xlarge-icons-80.png</iconset>
    </property>
    <property name="text">
@@ -515,7 +515,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/icons/icons8-resize-40.png</normaloff>:/icons/icons8-resize-40.png</iconset>
    </property>
    <property name="text">
@@ -527,7 +527,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/new.qrc">
+    <iconset>
      <normaloff>:/newPrefix/icons8-crop-80.png</normaloff>:/newPrefix/icons8-crop-80.png</iconset>
    </property>
    <property name="text">

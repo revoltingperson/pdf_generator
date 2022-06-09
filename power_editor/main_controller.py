@@ -129,7 +129,7 @@ class Controller:
         self.scene.clickable_image.create_item()
 
     def transform_image(self, rules):
-        self.scene.map_pixmap_to_scene(rules=rules)
+        self.scene.send_transformation(rules)
 
     def open_brightness_control(self):
         self.scene.brightness.show()

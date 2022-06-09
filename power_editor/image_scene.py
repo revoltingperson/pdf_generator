@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEv
     QGraphicsRectItem, QWidget, QGraphicsPixmapItem
 from serializer.serializer import Serializable
 
-debug = False
+debug = True
 
 
 class MainCanvas(QGraphicsScene, Serializable):
@@ -78,7 +78,7 @@ class MainCanvas(QGraphicsScene, Serializable):
     def load_new_image(self, image):
         pixmap = self.convert_raw_to_pixmap(image, new_image=True)
         self.remove_pixmap_policy(new_image=True)
-        self.map_pixmap_to_scene(pixmap=pixmap, rules=None)
+        self.map_pixmap_to_scene(pixmap=pixmap)
         self.editor.set_transform_pix(pixmap)
 
     def convert_raw_to_pixmap(self, image, new_image: bool = False):
@@ -121,25 +121,17 @@ class MainCanvas(QGraphicsScene, Serializable):
             if isinstance(item, QGraphicsPixmapItem):
                 return item.pixmap()
 
-    def map_pixmap_to_scene(self, pixmap=None, rules=None, cropped=False):
+    def map_pixmap_to_scene(self, pixmap=None, cropped=False):
         pixmap_to_show = pixmap
         if cropped and self.editor.transformation_pixmap.isNull():
             return
         elif cropped:
             self.editor.set_transform_pix(pixmap)
 
-        if rules is not None:
-            key, val = list(rules.items())[0]
-            if key == 'custom_rotation':
-                pixmap_to_show = self.transform_to_rules(rules)
-            else:
-                pixmap_to_show = self.transform_to_rules(rules)
-                self.editor.set_transform_pix(pixmap_to_show)
-                pixmap_to_show = self.editor.do_rotation(post_trans_pix=pixmap_to_show)
-
         self.remove_pixmap_policy(new_image=False)
         self.build_border(pixmap_to_show.height(), pixmap_to_show.width())
         self.addPixmap(pixmap_to_show)
+        self.history.add_pix_to_memory(pixmap_to_show)
         scene_rect = QRectF(self.XY_ZERO, self.XY_ZERO, pixmap_to_show.width(), pixmap_to_show.height())
         self.black_back = scene_rect
         self.setSceneRect(scene_rect)
@@ -149,6 +141,16 @@ class MainCanvas(QGraphicsScene, Serializable):
             print(f"pixmap in map_pixmap: {pixmap_to_show.size()}")
         if debug:
             print(f'scene rect in map_pixmap: {self.sceneRect()}')
+
+    def send_transformation(self, rules):
+        key, val = list(rules.items())[0]
+        if key == 'custom_rotation':
+            pixmap_to_show = self.transform_to_rules(rules)
+        else:
+            pixmap_to_show = self.transform_to_rules(rules)
+            self.editor.set_transform_pix(pixmap_to_show)
+            pixmap_to_show = self.editor.do_rotation(post_trans_pix=pixmap_to_show)
+        self.map_pixmap_to_scene(pixmap_to_show)
 
     def post_transform(self, cropped):
         if self.editor.color_mask is None \
@@ -224,30 +226,73 @@ class MainCanvas(QGraphicsScene, Serializable):
         return items
 
     def convert_to_bytes(self, pixmap) -> QByteArray:
-        bites = QByteArray()
-        buff = QBuffer(bites)
-        buff.open(QIODevice.WriteOnly)
-        pixmap.save(buff, 'PNG')
-        return bites
+        if pixmap is not None:
+            bites = QByteArray()
+            buff = QBuffer(bites)
+            buff.open(QIODevice.WriteOnly)
+            pixmap.save(buff, 'PNG')
+            return bites
+
+    def convert_all_to_bytes(self, package) -> list:
+        all_bites = []
+        if package:
+            for item in package:
+                ready = self.convert_to_bytes(item.pix)
+                all_bites.append(ready)
+        return all_bites
 
     def serialize(self):
         pixmap = self.return_scene_item_as_pixmap()
         byte_pixmap = self.convert_to_bytes(pixmap)
         texts = self.find_text_items_on_scene()
+        excel = self.excel.find_excel()
+        pictures = self.clickable_image.find_clickable_images()
+        byte_pictures = self.convert_all_to_bytes(pictures)
+
+        if excel is not None:
+            texts = list([item for item in texts if item.id != excel.id])
+        if pictures:
+            for picture in pictures:
+                for text in texts:
+                    if picture.id == text.id:
+                        texts.remove(text)
         return {
             'pixmap': str(byte_pixmap, 'ISO-8859-1'),
-            'clickable_text': [item.serialize() for item in texts]
+            'clickable_text': [item.serialize() for item in texts] if texts else 'None',
+            'excel': {'item': excel.serialize(), 'window': excel.excel_window.serialize()} if excel else 'None',
+            'pictures': [{'data': picture.serialize(), 'image': str(bites, 'ISO-8859-1')}
+                         for picture, bites in zip(pictures, byte_pictures)] if pictures else 'None'
         }
 
     def deserialize(self, data):
+        self.remove_pixmap_policy(new_image=True)
         from_json = data['pixmap']
+        pixmap = self.load_from_bytes(from_json)
+        self.map_pixmap_to_scene(pixmap=pixmap)
+        self.editor.set_transform_pix(pixmap)
+        self.create_new_color_mask_after_transform()
+
+        all_texts = data['clickable_text']
+        if all_texts != 'None':
+            for item in all_texts:
+                self.text_item.call_json_loader(item)
+
+        excel_json = data['excel']
+        if excel_json != 'None':
+            self.excel.call_json_loader(excel_json)
+
+        image_package = data['pictures']
+        if image_package != 'None':
+            for item in image_package:
+                pixmap_of_picture = self.load_from_bytes(item['image'])
+                self.clickable_image.call_json_loader(item['data'], pixmap_of_picture)
+
+    def load_from_bytes(self, from_json):
         bites = bytes(from_json, 'ISO-8859-1')
         ba = QByteArray.fromRawData(bites)
         pixmap = QPixmap()
         pixmap.loadFromData(ba, 'PNG')
-        self.map_pixmap_to_scene(pixmap=pixmap, rules=None)
-        for item in data['clickable_text']:
-            self.text_item.load_from_json(item)
+        return pixmap
 
 
 class BeautifulBorder(QGraphicsRectItem):

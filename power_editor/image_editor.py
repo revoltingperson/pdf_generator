@@ -88,7 +88,7 @@ class ImageEditor:
 
     def set_image_to_canvas(self, img):
         pixmap = self.scene.convert_raw_to_pixmap(img)
-        self.scene.map_pixmap_to_scene(pixmap=pixmap)
+        self.scene.map_pixmap_to_scene(pixmap)
 
     def change_gamma(self, in_img, value):
         if not self.is_mask_none():
@@ -111,6 +111,7 @@ class ImageEditor:
         if self.grey:
             grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             return grey
+        return img
 
     def add_blur(self, in_img, val):
         if not self.is_mask_none():
