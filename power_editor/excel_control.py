@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QObject, QRectF
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QAction
 from checked_bundle import CheckedButtons
-from text_in_image_control import ClickableText, TextItem
+from text_in_image_control import ClickableText, TextItem, CommunicateChange
 from toplevel.excel_control_window import ExcelWindow
 
 
@@ -14,11 +14,12 @@ class ExcelItem(ClickableText):
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(position, rect, extend_paint=True)
-        self.input_field.text_edit.setText('Your Excel text will look like this')
+        self.input_field.text_edit.setText('Your Excel text will look like this'
+                                           '\ndouble click me to open!')
         self.input_field.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
         self.input_field.text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.excel_window = ExcelWindow()
-        self.excel_window.show()
+        self.communicate = CommunicateChange()
         self.signal = self.Signaler()
         self.excel_window.window_signal[list].connect(lambda incoming: self.receive_excel_data(incoming))
         self.input_field.text_edit.double_click[bool].connect(lambda x: self.open_close_window(x))
@@ -40,6 +41,9 @@ class ExcelItem(ClickableText):
         self.setSelected(False)
         self.signal.pdf_complete[list].emit(incoming)
 
+    def communicate_new_position(self):
+        self.communicate.position_new.emit()
+
     class Signaler(QObject):
         pdf_complete = pyqtSignal(list)
 
@@ -58,12 +62,15 @@ class ExcelControl(CheckedButtons, QObject):
         position = event.scenePos()
         if self.button.isChecked():
             item = ExcelItem(position)
+            item.communicate.position_new.connect(self.scene.memorize_image_change)
+
             self.excel_item = item
             self.excel_item.signal.pdf_complete[list].connect(lambda excel: self.send_to_scene(excel))
             self.disable()
             self.remove_old_instance()
             self.scene.addItem(item)
             item.setSelected(True)
+            self.scene.memorize_image_change()
 
     def capture_format(self):
         self.format_saved = self.excel_item.serialize()

@@ -41,6 +41,10 @@ class Interface(QMainWindow):
 
         undo = self.findChild(QAction, 'Undo')
         undo.triggered.connect(self.controller.undo)
+        redo = self.findChild(QAction, 'Redo')
+        redo.triggered.connect(self.controller.redo)
+        author = self.findChild(QAction, 'Author')
+        author.triggered.connect(self.controller.author)
 
     def __initialize_tool_bar(self):
         self.zoom_button_in = self.findChild(QAction, 'Zoom_In_Out')

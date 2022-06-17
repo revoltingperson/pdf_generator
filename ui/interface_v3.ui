@@ -170,6 +170,7 @@
      <string>Edit</string>
     </property>
     <addaction name="Undo"/>
+    <addaction name="Redo"/>
    </widget>
    <widget class="QMenu" name="menuImage">
     <property name="title">
@@ -178,9 +179,16 @@
     <addaction name="Grey_filter"/>
     <addaction name="Brightness_control"/>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <addaction name="Author"/>
+   </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="palette">
@@ -332,6 +340,15 @@
    <property name="text">
     <string>Undo</string>
    </property>
+   <property name="toolTip">
+    <string>Undo</string>
+   </property>
+   <property name="statusTip">
+    <string>Ctrl+Z</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
   </action>
   <action name="Save_file">
    <property name="text">
@@ -345,7 +362,7 @@
   </action>
   <action name="Print">
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-print-80.png</normaloff>:/icons/icons8-print-80.png</iconset>
    </property>
    <property name="text">
@@ -357,7 +374,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-text-box-80.png</normaloff>:/icons/icons8-text-box-80.png</iconset>
    </property>
    <property name="text">
@@ -393,7 +410,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-zoom-in-80.png</normaloff>:/icons/icons8-zoom-in-80.png</iconset>
    </property>
    <property name="text">
@@ -410,7 +427,7 @@
   </action>
   <action name="Rotate_right">
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-rotate-right-80.png</normaloff>:/icons/icons8-rotate-right-80.png</iconset>
    </property>
    <property name="text">
@@ -419,7 +436,7 @@
   </action>
   <action name="Rotate_left">
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-rotate-left-80.png</normaloff>:/icons/icons8-rotate-left-80.png</iconset>
    </property>
    <property name="text">
@@ -428,7 +445,7 @@
   </action>
   <action name="Flip_horizontally">
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-flip-horizontal-80.png</normaloff>:/icons/icons8-flip-horizontal-80.png</iconset>
    </property>
    <property name="text">
@@ -437,7 +454,7 @@
   </action>
   <action name="Flip_vertically">
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-flip-vertical-80.png</normaloff>:/icons/icons8-flip-vertical-80.png</iconset>
    </property>
    <property name="text">
@@ -474,7 +491,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-circled-notch-80.png</normaloff>:/newPrefix/icons8-circled-notch-80.png</iconset>
    </property>
    <property name="text">
@@ -486,7 +503,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-select-all-80.png</normaloff>:/newPrefix/icons8-select-all-80.png</iconset>
    </property>
    <property name="text">
@@ -498,7 +515,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-xlarge-icons-80.png</normaloff>:/newPrefix/icons8-xlarge-icons-80.png</iconset>
    </property>
    <property name="text">
@@ -515,7 +532,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/icons/icons8-resize-40.png</normaloff>:/icons/icons8-resize-40.png</iconset>
    </property>
    <property name="text">
@@ -527,11 +544,30 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../icons/new.qrc">
      <normaloff>:/newPrefix/icons8-crop-80.png</normaloff>:/newPrefix/icons8-crop-80.png</iconset>
    </property>
    <property name="text">
     <string>Crop</string>
+   </property>
+  </action>
+  <action name="Redo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="toolTip">
+    <string>Redo</string>
+   </property>
+   <property name="statusTip">
+    <string>Alt+Z</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Z</string>
+   </property>
+  </action>
+  <action name="Author">
+   <property name="text">
+    <string>Author</string>
    </property>
   </action>
  </widget>

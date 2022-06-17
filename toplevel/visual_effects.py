@@ -25,10 +25,14 @@ class BrightnessWidget(QWidget):
         self.brightness.valueChanged.connect(self.editor.set_all_filters)
         self.blur.valueChanged.connect(self.editor.set_all_filters)
         self.gamma.valueChanged.connect(self.editor.set_all_filters)
+        self.brightness.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
+        self.gamma.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
+        self.blur.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
 
         self.setWindowFlag(Qt.Window)
 
-
+    def hello(self):
+        print('hello')
 
 
 

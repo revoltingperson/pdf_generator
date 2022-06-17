@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from PyQt5.QtGui import QPainter
@@ -126,7 +127,7 @@ class Controller:
                 self.scene.deserialize(raw_data)
 
     def open_imposed_picture(self):
-        self.scene.clickable_image.create_item()
+        self.scene.clickable_image.create_on_click()
 
     def transform_image(self, rules):
         self.scene.send_transformation(rules)
@@ -136,11 +137,22 @@ class Controller:
 
     def make_image_grey(self):
         self.scene.editor.turn_to_greyscale()
+        self.scene.memorize_image_change()
 
     def undo(self):
-        pass
+        self.scene.undo_redo_action(forward=False)
+
+    def redo(self):
+        self.scene.undo_redo_action(forward=True)
+
+    def author(self):
+        QMessageBox.information(self.interface, 'About me', 'Если вы это читаете, значит вы купили мою программу или я вам ее подарил. :P\nПожелания и комментарии: vadim.freelance.projects@gmail.com', QMessageBox.Ok)
 
 
 if __name__ == '__main__':
-    app = Controller()
-    app.main()
+    logging.basicConfig(filename="mylog.log")
+    try:
+        app = Controller()
+        app.main()
+    except Exception as e:
+        logging.error(e)

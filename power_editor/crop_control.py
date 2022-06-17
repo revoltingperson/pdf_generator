@@ -96,6 +96,7 @@ class Cropper(CheckedButtons):
             self.cropper_item.setSelected(True)
             self.disable()
 
+
     def remove_signal(self):
         for item in self.scene.items():
             if item.__class__ in [CropResizer, CropperItem, CropProxy]:

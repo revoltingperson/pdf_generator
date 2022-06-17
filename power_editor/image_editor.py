@@ -87,8 +87,9 @@ class ImageEditor:
             return img
 
     def set_image_to_canvas(self, img):
-        pixmap = self.scene.convert_raw_to_pixmap(img)
-        self.scene.map_pixmap_to_scene(pixmap)
+        if not self.is_mask_none():
+            pixmap = self.scene.convert_raw_to_pixmap(img)
+            self.scene.map_pixmap_to_scene(pixmap)
 
     def change_gamma(self, in_img, value):
         if not self.is_mask_none():
@@ -126,3 +127,6 @@ class ImageEditor:
         grey = self.apply_greyscale(gam_img)
         out = self.add_blur(grey, self.last_blur)
         self.set_image_to_canvas(out)
+
+    def create_stamp_on_slider_release(self):
+        self.scene.memorize_image_change()

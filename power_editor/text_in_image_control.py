@@ -1,12 +1,18 @@
+import pprint
 from string import Template
 
-from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QSettings
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QSettings, QObject
 from PyQt5.QtGui import QColor, QPen, QTextCursor, QTextCharFormat, QFont
 from PyQt5.QtWidgets import *
 from checked_bundle import CheckedButtons
 from serializer.serializer import Serializable
+from collections import namedtuple
 
 debug = True
+
+
+class CommunicateChange(QObject):
+    position_new = pyqtSignal()
 
 
 class TextItem(CheckedButtons):
@@ -19,9 +25,11 @@ class TextItem(CheckedButtons):
         position = event.scenePos()
         if self.button.isChecked():
             item = ClickableText(position)
-            self.disable()
             self.scene.addItem(item)
+            item.communicate.position_new.connect(self.scene.memorize_image_change)
             item.setSelected(True)
+            self.disable()
+            self.scene.memorize_image_change()
 
     def call_json_loader(self, data):
         item = self.load_from_json(ClickableText, data)
@@ -31,9 +39,16 @@ class TextItem(CheckedButtons):
 class ClickableText(QGraphicsRectItem, Serializable):
     width_inner = 80
     height_inner = 35
+    my_selection_list = []
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), extend_paint=False):
         super().__init__(rect)
+        self.position_end = []
+        self.position_start = []
+
+        self.start_memorize = False
+        self.communicate = CommunicateChange()
+
         self.id = id(self)
 
         self.optional_action: bool = extend_paint
@@ -51,13 +66,52 @@ class ClickableText(QGraphicsRectItem, Serializable):
         self.content = QGraphicsProxyWidget(self)
         self.initialize_input()
 
-
-
     def _initialize_flags(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsFocusable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def memorize_mode_on(self):
+        if not self.start_memorize:
+            self.start_memorize = True
+            self.position_start.clear()
+            for item in self.scene().items():
+                if hasattr(item, 'id'):
+                    pprint.pprint(f'memory on{(item.id, item.scenePos().x(), item.scenePos().y())}')
+                    print(item)
+                    Snapshot = namedtuple('Snapshot', 'id pos rect')
+                    item_snap = Snapshot(item.id, item.scenePos(), item.rect())
+                    self.my_selection_list.append(item_snap)
+
+    def memorize_mode_off(self):
+        if self.start_memorize:
+            self.start_memorize = False
+            self.position_end.clear()
+            self.check_for_position_changes()
+            pprint.pprint(f'memory mode off{self.my_selection_list}, {self}')
+            self.my_selection_list.clear()
+
+    def check_for_position_changes(self):
+        for item in self.scene().items():
+            if hasattr(item, 'id'):
+                self.send_signal_if_something_changed(item)
+
+    def send_signal_if_something_changed(self, item):
+        changed_pos = ([item for saved in self.my_selection_list
+                        if (item.id == saved.id and item.scenePos() != saved.pos)
+                        or (item.id == saved.id and item.rect() != saved.rect)])
+        # print([item.rect for item in self.my_selection_list])
+        no_duplicate_items = set([item.id for item in changed_pos])
+        if no_duplicate_items:
+            self.communicate_new_position()
+
+    def communicate_new_position(self):
+        self.communicate.position_new.emit()
+
+    def mouseReleaseEvent(self, QGraphicsSceneMouseEvent):
+        self.memorize_mode_off()
+        super(ClickableText, self).mouseReleaseEvent(QGraphicsSceneMouseEvent)
 
     def paint(self, painter, option, widget=None):
         if self.input_field.text_edit.hasFocus():
@@ -70,6 +124,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
             painter.setPen(pen)
             painter.setBrush(Qt.transparent)
             painter.drawRect(self.rect())
+            self.memorize_mode_on()
 
         elif self.resizer.isSelected():
             # important hack to keep circle visible
@@ -78,6 +133,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
             painter.setPen(pen)
             painter.setBrush(Qt.transparent)
             painter.drawRect(self.rect())
+            self.memorize_mode_on()
         else:
             self.resizer.hide()
         if self.optional_action:
@@ -116,8 +172,8 @@ class Resizer(QGraphicsObject):
     resizeSignal = pyqtSignal(QPointF)
 
     def __init__(self, parent, rect=QRectF(0, 0, 10, 10)):
+        self.p = parent
         super().__init__(parent)
-
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
@@ -143,6 +199,11 @@ class Resizer(QGraphicsObject):
                 self.resizeSignal[QPointF].emit(value - self.pos())
 
         return value
+
+    def mouseReleaseEvent(self, event):
+        print(self.p.start_memorize)
+        self.p.memorize_mode_off()
+        super(Resizer, self).mouseReleaseEvent(event)
 
 
 class InputFields(QWidget):

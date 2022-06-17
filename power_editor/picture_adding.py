@@ -1,8 +1,8 @@
-from PyQt5.QtCore import QPoint, QPointF, QRectF
+from PyQt5.QtCore import QPointF, QRectF
 from PyQt5.QtGui import QPainter, QPixmap
 
 from checked_bundle import CheckedButtons
-from text_in_image_control import ClickableText as Clickable
+from text_in_image_control import ClickableText as Clickable, CommunicateChange
 
 
 class PictureItem(CheckedButtons):
@@ -12,13 +12,15 @@ class PictureItem(CheckedButtons):
         self.scene = scene
         self.button = interface.impose_image
 
-    def create_item(self):
+    def create_on_click(self):
         pix = self.interface.controller.help_open_file(clickable_p=True)
         if pix:
             item = ClickableImage(QPointF(0.0, 0.0), pixmap=pix)
+            item.communicate.position_new.connect(self.scene.memorize_image_change)
             self.disable()
             self.scene.addItem(item)
             item.setSelected(True)
+            self.scene.memorize_image_change()
 
     def find_clickable_images(self):
         all_pics = []
@@ -42,6 +44,7 @@ class ClickableImage(Clickable):
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner), pixmap=None):
         super().__init__(position, rect, extend_paint=True)
         self.pix: QPixmap = pixmap
+        self.communicate = CommunicateChange()
 
     def extend_paint_action(self, painter: QPainter):
         new = self.pix.scaled(int(self.rect().width()), int(self.rect().height()))
@@ -57,6 +60,9 @@ class ClickableImage(Clickable):
 
     def initialize_input(self):
         pass
+
+    def communicate_new_position(self):
+        self.communicate.position_new.emit()
 
 
 
