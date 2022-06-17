@@ -33,6 +33,7 @@ class TextItem(CheckedButtons):
 
     def call_json_loader(self, data):
         item = self.load_from_json(ClickableText, data)
+        item.communicate.position_new.connect(self.scene.memorize_image_change)
         self.scene.addItem(item)
 
 

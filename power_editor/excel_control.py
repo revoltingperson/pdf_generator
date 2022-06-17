@@ -107,6 +107,7 @@ class ExcelControl(CheckedButtons, QObject):
     def call_json_loader(self, data):
         item_ready = self.load_from_json(ExcelItem, data['item'])
         item_ready.excel_window.deserialize(data['window'])
+        item_ready.communicate.position_new.connect(self.scene.memorize_image_change)
         self.scene.addItem(item_ready)
 
 

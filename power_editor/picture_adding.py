@@ -34,6 +34,7 @@ class PictureItem(CheckedButtons):
         x, y = data['position'][0], data['position'][1]
         position = QPointF(x, y)
         item = ClickableImage(position, rect=QRectF(0, 0, wid, height), pixmap=picture)
+        item.communicate.position_new.connect(self.scene.memorize_image_change)
         self.scene.addItem(item)
 
 

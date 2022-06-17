@@ -1,7 +1,7 @@
 import typing
 import cv2
 import numpy as np
-
+from threading import Thread
 from checked_bundle import Collector, CheckedButtons
 from crop_control import *
 from excel_control import ExcelControl
@@ -146,6 +146,9 @@ class MainCanvas(QGraphicsScene, Serializable):
         # noinspection PyArgumentList
         return chosen(val)
 
+    def spawn_a_thread(self, rules, from_history):
+        pass
+
     def send_transformation(self, rules, from_history=False):
         key, val = list(rules.items())[0]
         if key == 'custom_rotation':
@@ -161,7 +164,8 @@ class MainCanvas(QGraphicsScene, Serializable):
         self.map_pixmap_to_scene(pixmap_to_show)
 
     def memorize_image_change(self):
-        self.history.add_pix_to_memory(self.editor.transformation_pixmap, self.editor, self.serialize(exclude_pixmap=True))
+        self.history.add_pix_to_memory(self.editor.transformation_pixmap, self.editor,
+                                       self.serialize(exclude_pixmap=True))
 
     def post_transform(self, cropped):
         if self.editor.color_mask is None \
@@ -336,6 +340,8 @@ class MainCanvas(QGraphicsScene, Serializable):
                 pixmap_of_picture = self.load_from_bytes(item['image'])
                 self.clickable_image.call_json_loader(item['data'], pixmap_of_picture)
 
+        if load_as_project_file:
+            self.memorize_image_change()
 
 
 class BeautifulBorder(QGraphicsRectItem):
