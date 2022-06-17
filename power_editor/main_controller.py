@@ -5,7 +5,7 @@ import os
 from PyQt5.QtGui import QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout
-
+from threading import Thread
 import cv2
 
 from power_editor.image_scene import MainCanvas, Collector
@@ -129,7 +129,11 @@ class Controller:
     def open_imposed_picture(self):
         self.scene.clickable_image.create_on_click()
 
-    def transform_image(self, rules):
+    def transform_image(self, rules: dict):
+        thread = Thread(target=self.transform_in_thread, args=(rules,))
+        thread.run()
+
+    def transform_in_thread(self, rules: dict):
         self.scene.send_transformation(rules)
 
     def open_brightness_control(self):

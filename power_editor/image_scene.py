@@ -1,3 +1,4 @@
+import time
 import typing
 import cv2
 import numpy as np
@@ -146,9 +147,6 @@ class MainCanvas(QGraphicsScene, Serializable):
         # noinspection PyArgumentList
         return chosen(val)
 
-    def spawn_a_thread(self, rules, from_history):
-        pass
-
     def send_transformation(self, rules, from_history=False):
         key, val = list(rules.items())[0]
         if key == 'custom_rotation':
@@ -270,7 +268,11 @@ class MainCanvas(QGraphicsScene, Serializable):
             bites = QByteArray()
             buff = QBuffer(bites)
             buff.open(QIODevice.WriteOnly)
+            start = time.time()
             pixmap.save(buff, 'PNG')
+            end = time.time()
+            print(f'benchmark for bytes{end-start}')
+
             return bites
 
     def convert_all_to_bytes(self, package) -> list:
