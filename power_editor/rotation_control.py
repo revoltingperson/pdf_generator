@@ -1,6 +1,6 @@
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSpinBox, QPushButton, QAction
-from checked_bundle import CheckedButtons
+from power_editor.checked_bundle import CheckedButtons
 
 
 class Rotator(CheckedButtons):
@@ -17,7 +17,7 @@ class Rotator(CheckedButtons):
         self.push = QPushButton()
         self.push.setText('Ok')
         # noinspection PyUnresolvedReferences
-        self.push.clicked.connect(lambda rules: self.scene.send_transformation({'custom_rotation': self.spin_box.value()}))
+        self.push.clicked.connect(lambda rules: self.scene.send_transformation({'rotation': self.spin_box.value()}))
         self.spin_box.setMaximum(360)
         self.spin_box.setMinimum(-360)
         self.new_layout.addWidget(self.spin_box)

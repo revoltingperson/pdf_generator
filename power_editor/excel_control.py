@@ -2,9 +2,8 @@ from string import Template
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QObject, QRectF
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QAction
-from checked_bundle import CheckedButtons
-from text_in_image_control import ClickableText, TextItem, CommunicateChange
+from power_editor.checked_bundle import CheckedButtons
+from power_editor.text_in_image_control import ClickableText, CommunicateChange
 from toplevel.excel_control_window import ExcelWindow
 
 
@@ -62,7 +61,7 @@ class ExcelControl(CheckedButtons, QObject):
         position = event.scenePos()
         if self.button.isChecked():
             item = ExcelItem(position)
-            item.communicate.position_new.connect(self.scene.memorize_image_change)
+            item.communicate.position_new.connect(self.scene.memorize_change_on_scene)
 
             self.excel_item = item
             self.excel_item.signal.pdf_complete[list].connect(lambda excel: self.send_to_scene(excel))
@@ -70,7 +69,7 @@ class ExcelControl(CheckedButtons, QObject):
             self.remove_old_instance()
             self.scene.addItem(item)
             item.setSelected(True)
-            self.scene.memorize_image_change()
+            self.scene.memorize_change_on_scene()
 
     def capture_format(self):
         self.format_saved = self.excel_item.serialize()
@@ -107,7 +106,7 @@ class ExcelControl(CheckedButtons, QObject):
     def call_json_loader(self, data):
         item_ready = self.load_from_json(ExcelItem, data['item'])
         item_ready.excel_window.deserialize(data['window'])
-        item_ready.communicate.position_new.connect(self.scene.memorize_image_change)
+        item_ready.communicate.position_new.connect(self.scene.memorize_change_on_scene)
         self.scene.addItem(item_ready)
 
 

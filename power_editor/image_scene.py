@@ -1,25 +1,25 @@
-import time
-import typing
-import cv2
-import numpy as np
-from threading import Thread
-from checked_bundle import Collector, CheckedButtons
-from crop_control import *
-from excel_control import ExcelControl
-from image_editor import ImageEditor
-from picture_adding import PictureItem, ClickableImage
-from power_editor.scene_history_stack import HistoryStack
-from resize_control import Resizer
-from rotation_control import Rotator
-from toplevel.visual_effects import BrightnessWidget
-from zoom_control import ZoomEnableDisable
-from text_in_image_control import TextItem, ClickableText, CommunicateChange
 
-from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice, QRect
-from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent, QTransform, QPaintDevice
+import random
+import typing
+import numpy as np
+from power_editor.crop_control import *
+from power_editor.excel_control import ExcelControl
+from power_editor.image_editor import ImageEditor
+from power_editor.picture_adding import PictureItem, ClickableImage
+from power_editor.scene_history_stack import HistoryStack, HistoryStamp
+from power_editor.resize_control import Resizer
+from power_editor.rotation_control import Rotator
+from toplevel.visual_effects import BrightnessWidget
+from power_editor.zoom_control import ZoomEnableDisable
+from power_editor.text_in_image_control import TextItem, ClickableText, CommunicateChange
+from power_editor.checked_bundle import Collector
+
+from PyQt5.QtCore import Qt, QRectF, QByteArray, QBuffer, QIODevice
+from PyQt5.QtGui import QPixmap, QPainter, QImage, QBrush, QColor, QPen, QKeyEvent
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsProxyWidget, \
     QGraphicsRectItem, QWidget, QGraphicsPixmapItem
 from serializer.serializer import Serializable
+
 
 debug = False
 
@@ -77,27 +77,22 @@ class MainCanvas(QGraphicsScene, Serializable):
         image.save(where)
 
     def load_new_image(self, image):
-        pixmap = self.convert_raw_to_pixmap(image, new_image=True)
-        self.remove_pixmap_policy(new_image=True)
-        self.map_pixmap_to_scene(pixmap=pixmap)
-        self.editor.set_transform_pix(pixmap)
+        self.editor.set_color_mask(image)
+        self.editor.set_to_default()
+        self.history.clear_history()
+        self.convert_cv2_to_main_pixmap(image, save_size=True)
+        self.map_pixmap_to_scene(new_image=True, pixmap=self.editor.base_pixmap)
 
-    def convert_raw_to_pixmap(self, image, new_image: bool = False):
+    def convert_cv2_to_main_pixmap(self, image, save_size=False):
+        import cv2 as cv2
         frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width = frame.shape[0], frame.shape[1]
-
-        if new_image:
-            self.editor.set_color_mask(image)
-            self.editor.set_to_default()
+        if save_size:
+            self.editor.height, self.editor.width = height, width
 
         q_image = QImage(frame, width, height, frame.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap().fromImage(q_image)
-
-        if new_image:
-            self.history.clear_history()
-            self.history.add_pix_to_memory(pixmap, self.editor, self.serialize(exclude_pixmap=True))
-
-        return pixmap
+        self.editor.set_transform_pix(pixmap)
 
     def convert_qimage_clean(self, image):
         """ qimage does not destroy the alpha channel, that is why I am not
@@ -107,79 +102,70 @@ class MainCanvas(QGraphicsScene, Serializable):
         pix = QPixmap().fromImage(q_image)
         return pix
 
-    def return_scene_item_as_pixmap(self) -> QPixmap:
-        for item in self.items():
-            if isinstance(item, QGraphicsPixmapItem):
-                return item.pixmap()
-
-    def map_pixmap_to_scene(self, pixmap=None, cropped=False):
+    def map_pixmap_to_scene(self, new_image, pixmap=None, cropped=False):
         pixmap_to_show = pixmap
-        if cropped and self.editor.transformation_pixmap.isNull():
+        if cropped and self.editor.base_pixmap.isNull():
             return
-        elif cropped:
-            self.editor.set_transform_pix(pixmap)
-            self.history.add_pix_to_memory(pixmap, self.editor, self.serialize(exclude_pixmap=True))
 
-        self.remove_pixmap_policy(new_image=False)
+        self.remove_pixmap_policy(new_image)
         self.build_border(pixmap_to_show.height(), pixmap_to_show.width())
         self.addPixmap(pixmap_to_show)
         scene_rect = QRectF(self.XY_ZERO, self.XY_ZERO, pixmap_to_show.width(), pixmap_to_show.height())
         self.black_back = scene_rect
         self.setSceneRect(scene_rect)
-        self.post_transform(cropped)
+        print(f'memory mode in mapping {self.editor.memory_mode}')
+        if self.editor.memory_mode:
+            self.memorize_change_on_scene()
+        self.editor.memory_mode = True
 
-        if debug:
-            print(f"pixmap in map_pixmap: {pixmap_to_show.size()}")
-        if debug:
-            print(f'scene rect in map_pixmap: {self.sceneRect()}')
-
-    def transform_to_rules(self, rules: dict):
+    def add_transformation_data(self, rules: dict):
         key, val = list(rules.items())[0]
 
-        options = {'rotation': self.editor.do_rotation,
-                   'flip': self.editor.do_flip,
-                   'resize': self.editor.resize,
-                   'custom_rotation': self.editor.do_custom_rotation
+        options = {'rotation': self.editor.write_value_to_angle,
+                   'flip': self.editor.write_value_to_flip,
+                   'resize': self.editor.write_value_to_resize,
                    }
 
         chosen = options.get(key)
-        self.editor.set_color_mask(None)
         # noinspection PyArgumentList
-        return chosen(val)
+        chosen(val)
 
-    def send_transformation(self, rules, from_history=False):
-        key, val = list(rules.items())[0]
-        if key == 'custom_rotation':
-            pixmap_to_show = self.transform_to_rules(rules)
-            self.memorize_image_change()
-        else:
-            pixmap_to_show = self.transform_to_rules(rules)
-            self.editor.set_transform_pix(pixmap_to_show)
-            pixmap_to_show = self.editor.do_rotation(post_trans_pix=pixmap_to_show)
-            if not from_history:
-                self.memorize_image_change()
+    def send_transformation(self, rules):
+        self.add_transformation_data(rules)
+        self.transform_to_set_values()
 
-        self.map_pixmap_to_scene(pixmap_to_show)
+    def transform_to_set_values(self):
+        updated_pixmap = self.editor.restore_transformation()
+        self.map_pixmap_to_scene(False, pixmap=updated_pixmap)
 
-    def memorize_image_change(self):
-        self.history.add_pix_to_memory(self.editor.transformation_pixmap, self.editor,
-                                       self.serialize(exclude_pixmap=True))
+    def merge_pixmap_and_cv2(self, img):
+        self.convert_cv2_to_main_pixmap(img)
+        self.transform_to_set_values()
 
-    def post_transform(self, cropped):
-        if self.editor.color_mask is None \
-                and not self.editor.transformation_pixmap.isNull():
-            self.create_new_color_mask_after_transform()
-            self.editor.set_all_filters()
+    def memorize_change_on_scene(self):
+        items = self.prepare_items_for_history()
+        editor = self.editor.__dict__.copy()
 
-        elif cropped:
-            self.create_new_color_mask_after_transform()
-            self.editor.set_to_default()
+        editor['id'] = random.getrandbits(16)
+
+        self.history.build_history_stamp(editor, items)
+
+    def prepare_items_for_history(self):
+        text_items = self.find_text_items_on_scene()
+        excel = self.excel.find_excel()
+        pictures = self.clickable_image.turn_items_to_pixmap()
+        return {
+            'clickable_text': [item.serialize() for item in text_items] if text_items else 'None',
+            'excel': {'item': excel.serialize(), 'window': excel.excel_window.serialize()} if excel else 'None',
+            'pictures': pictures
+        }
 
     def drawBackground(self, painter, rect) -> None:
         painter.setBrush(Qt.black)
         painter.drawRect(self.black_back)
 
-    def create_new_color_mask_after_transform(self):
+    def create_new_color_mask_after_loading(self):
+        import cv2
         pixmap = self.return_scene_item_as_pixmap()
         byte = self.convert_to_bytes(pixmap)
         read_from_bytes = byte.data()
@@ -202,24 +188,19 @@ class MainCanvas(QGraphicsScene, Serializable):
             if isinstance(item, QGraphicsPixmapItem) or isinstance(item, BeautifulBorder):
                 self.removeItem(item)
 
-    def coordinate_selected_items(self):
-        pass
+    def return_scene_item_as_pixmap(self) -> QPixmap:
+        for item in self.items():
+            if isinstance(item, QGraphicsPixmapItem):
+                return item.pixmap()
 
     def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         self.text_item.create_on_click(event)
         self.cropper.create_on_click(event)
         self.excel.create_on_click(event)
 
-        if debug:
-            print(f'selected items: {self.selectedItems()}')
-            # print(f'items at {event.scenePos()} {self.itemAt(event.scenePos(), QTransform())}')
-
         super(MainCanvas, self).mousePressEvent(event)
 
     def keyPressEvent(self, event) -> None:
-        if debug:
-            print(f'selected items: {self.selectedItems()}')
-            print(f'all items: {self.items()}')
         if event.key() == Qt.Key_Delete:
             [self.removeItem(item) for item in self.selectedItems()]
         if event.key() == Qt.Key_Shift:
@@ -231,8 +212,6 @@ class MainCanvas(QGraphicsScene, Serializable):
             self.shift_pressed = False
 
     def do_selection_on_focus(self, item):
-        if debug: print(f'selection changed to {item}')
-
         if self.shift_pressed:
             if isinstance(item, (ClickableImage, ClickableText)):
                 self.selectedItems().append(item)
@@ -245,33 +224,27 @@ class MainCanvas(QGraphicsScene, Serializable):
     def find_text_items_on_scene(self) -> list:
         items = []
         for item in self.items():
-            if isinstance(item, ClickableText):
+            if isinstance(item, ClickableText) and item.id in self.text_item.text_items_ids:
                 items.append(item)
         return items
 
     def undo_redo_action(self, forward):
         self.history.restore_from_history(forward=forward)
-        history_stamp = self.history.retrieve_stamp()
+        history_stamp: HistoryStamp = self.history.retrieve_stamp()
         if history_stamp:
             self.clear()
-            self.editor.set_transform_pix(history_stamp.pixmap)
-            self.editor.last_custom_rot = history_stamp.rotation
-            self.editor.last_brightness = history_stamp.brightness
-            self.editor.last_gamma = history_stamp.gamma
-            self.editor.last_blur = history_stamp.blur
-            self.editor.grey = history_stamp.grey
-            self.deserialize(history_stamp.serialized, load_as_project_file=False)
-            self.send_transformation({'rotation': history_stamp.rotation}, from_history=True)
+            print(f"current stamp{history_stamp.identifier, history_stamp.editor['last_angle']}")
+            self.editor.__dict__ = dict(history_stamp.editor)
+            self.editor.memory_mode = False
+            self.merge_pixmap_and_cv2(self.editor.color_mask)
+            self.editor.set_all_filters()
 
     def convert_to_bytes(self, pixmap) -> QByteArray:
         if pixmap is not None:
             bites = QByteArray()
             buff = QBuffer(bites)
             buff.open(QIODevice.WriteOnly)
-            start = time.time()
             pixmap.save(buff, 'PNG')
-            end = time.time()
-            print(f'benchmark for bytes{end-start}')
 
             return bites
 
@@ -290,25 +263,16 @@ class MainCanvas(QGraphicsScene, Serializable):
         pixmap.loadFromData(ba, 'PNG')
         return pixmap
 
-    def serialize(self, exclude_pixmap=False):
-        if exclude_pixmap:
-            pix_dict_val = 'None'
-        else:
-            pixmap = self.return_scene_item_as_pixmap()
-            byte_pixmap = self.convert_to_bytes(pixmap)
-            pix_dict_val = str(byte_pixmap, 'ISO-8859-1')
+    def serialize(self):
+
+        pixmap = self.return_scene_item_as_pixmap()
+        byte_pixmap = self.convert_to_bytes(pixmap)
+        pix_dict_val = str(byte_pixmap, 'ISO-8859-1')
         texts = self.find_text_items_on_scene()
         excel = self.excel.find_excel()
         pictures = self.clickable_image.find_clickable_images()
         byte_pictures = self.convert_all_to_bytes(pictures)
 
-        if excel is not None:
-            texts = list([item for item in texts if item.id != excel.id])
-        if pictures:
-            for picture in pictures:
-                for text in texts:
-                    if picture.id == text.id:
-                        texts.remove(text)
         return {
             'pixmap': pix_dict_val,
             'clickable_text': [item.serialize() for item in texts] if texts else 'None',
@@ -320,12 +284,11 @@ class MainCanvas(QGraphicsScene, Serializable):
     def deserialize(self, data, load_as_project_file=True):
         if load_as_project_file:
             self.history.clear_history()
-            self.remove_pixmap_policy(new_image=True)
             from_json = data['pixmap']
             pixmap = self.load_from_bytes(from_json)
-            self.map_pixmap_to_scene(pixmap=pixmap)
+            self.map_pixmap_to_scene(new_image=True, pixmap=pixmap)
             self.editor.set_transform_pix(pixmap)
-            self.create_new_color_mask_after_transform()
+            self.create_new_color_mask_after_loading()
 
         all_texts = data['clickable_text']
         if all_texts != 'None':
@@ -336,14 +299,12 @@ class MainCanvas(QGraphicsScene, Serializable):
         if excel_json != 'None':
             self.excel.call_json_loader(excel_json)
 
-        image_package = data['pictures']
-        if image_package != 'None':
-            for item in image_package:
-                pixmap_of_picture = self.load_from_bytes(item['image'])
-                self.clickable_image.call_json_loader(item['data'], pixmap_of_picture)
-
         if load_as_project_file:
-            self.memorize_image_change()
+            image_package = data['pictures']
+            if image_package != 'None':
+                for item in image_package:
+                    pixmap_of_picture = self.load_from_bytes(item['image'])
+                    self.clickable_image.call_json_loader(item['data'], pixmap_of_picture)
 
 
 class BeautifulBorder(QGraphicsRectItem):

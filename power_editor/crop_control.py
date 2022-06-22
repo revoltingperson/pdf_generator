@@ -3,8 +3,8 @@ from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtWidgets import QAction, QGraphicsRectItem, QGraphicsItem, QGraphicsObject, QPushButton, \
     QGraphicsProxyWidget, QWidget, QVBoxLayout, QGraphicsSceneMouseEvent
 
-from checked_bundle import CheckedButtons
-from text_in_image_control import Resizer as CropResizer
+from power_editor.checked_bundle import CheckedButtons
+from power_editor.text_in_image_control import Resizer as CropResizer
 
 
 class CropperItem(QGraphicsRectItem):
@@ -36,6 +36,12 @@ class CropperItem(QGraphicsRectItem):
 
     def initiate_crop(self):
         self.cropper.crop_image_on_signal()
+
+    def memorize_mode_off(self):
+        pass
+
+    def memorize_mode_on(self):
+        pass
 
     def paint(self, painter, option, widget=None) -> None:
         if self.isSelected() or self.hasFocus():
@@ -96,7 +102,6 @@ class Cropper(CheckedButtons):
             self.cropper_item.setSelected(True)
             self.disable()
 
-
     def remove_signal(self):
         for item in self.scene.items():
             if item.__class__ in [CropResizer, CropperItem, CropProxy]:
@@ -110,8 +115,10 @@ class Cropper(CheckedButtons):
                                  int(self.cropper_item.rect().width()),
                                  int(self.cropper_item.rect().height())
                                  )
+
+            self.scene.editor.crop_color_mask_as_pixmap(area_to_crop)
             cropped_image_to_load = item.copy(area_to_crop)
-            self.scene.map_pixmap_to_scene(pixmap=cropped_image_to_load, cropped=True)
+            self.scene.map_pixmap_to_scene(False, pixmap=cropped_image_to_load, cropped=True)
             self.cropper_item.setSelected(False)
 
 

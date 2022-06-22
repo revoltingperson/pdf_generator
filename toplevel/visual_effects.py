@@ -1,9 +1,7 @@
 import time
 from pathlib import Path
-from threading import Thread
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QWidget, QSlider
 
 from power_editor.image_editor import ImageEditor
@@ -22,9 +20,6 @@ class BrightnessWidget(QWidget):
         self.blur = self.findChild(QSlider, 'blur')
         self.blur.valueChanged.connect(lambda val: self.editor.set_last_blur(val))
 
-        self.brightness.valueChanged.connect(self.editor.set_all_filters)
-        self.blur.valueChanged.connect(self.editor.set_all_filters)
-        self.gamma.valueChanged.connect(self.editor.set_all_filters)
         self.brightness.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
         self.gamma.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
         self.blur.sliderReleased.connect(self.editor.create_stamp_on_slider_release)
@@ -33,6 +28,7 @@ class BrightnessWidget(QWidget):
 
     def hello(self):
         print('hello')
+
 
 
 

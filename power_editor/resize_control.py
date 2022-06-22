@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QAction, QWidget, QSpinBox, QPushButton, QHBoxLayout, QLabel
 
-from checked_bundle import CheckedButtons
+from power_editor.checked_bundle import CheckedButtons
 
 
 class Resizer(CheckedButtons):

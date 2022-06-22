@@ -1,10 +1,7 @@
-from pathlib import Path
-
-from PyQt5 import uic
 from PyQt5.QtCore import QRect
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QAction, QSlider
-from checked_bundle import CheckedButtons
+from power_editor.checked_bundle import CheckedButtons
 
 
 class ZoomEnableDisable(CheckedButtons):

@@ -1,10 +1,8 @@
-import pprint
-from string import Template
 
-from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QSettings, QObject
-from PyQt5.QtGui import QColor, QPen, QTextCursor, QTextCharFormat, QFont
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtGui import QColor, QPen, QTextCursor, QTextCharFormat
 from PyQt5.QtWidgets import *
-from checked_bundle import CheckedButtons
+from power_editor.checked_bundle import CheckedButtons
 from serializer.serializer import Serializable
 from collections import namedtuple
 
@@ -20,20 +18,22 @@ class TextItem(CheckedButtons):
         super().__init__()
         self.scene = scene
         self.button = interface.add_text
+        self.text_items_ids = []
 
     def create_on_click(self, event):
         position = event.scenePos()
         if self.button.isChecked():
             item = ClickableText(position)
             self.scene.addItem(item)
-            item.communicate.position_new.connect(self.scene.memorize_image_change)
+            self.text_items_ids.append(item.id)
+            item.communicate.position_new.connect(self.scene.memorize_change_on_scene)
             item.setSelected(True)
             self.disable()
-            self.scene.memorize_image_change()
+            self.scene.memorize_change_on_scene()
 
     def call_json_loader(self, data):
         item = self.load_from_json(ClickableText, data)
-        item.communicate.position_new.connect(self.scene.memorize_image_change)
+        item.communicate.position_new.connect(self.scene.memorize_change_on_scene)
         self.scene.addItem(item)
 
 
@@ -79,8 +79,6 @@ class ClickableText(QGraphicsRectItem, Serializable):
             self.position_start.clear()
             for item in self.scene().items():
                 if hasattr(item, 'id'):
-                    pprint.pprint(f'memory on{(item.id, item.scenePos().x(), item.scenePos().y())}')
-                    print(item)
                     Snapshot = namedtuple('Snapshot', 'id pos rect')
                     item_snap = Snapshot(item.id, item.scenePos(), item.rect())
                     self.my_selection_list.append(item_snap)
@@ -90,7 +88,6 @@ class ClickableText(QGraphicsRectItem, Serializable):
             self.start_memorize = False
             self.position_end.clear()
             self.check_for_position_changes()
-            pprint.pprint(f'memory mode off{self.my_selection_list}, {self}')
             self.my_selection_list.clear()
 
     def check_for_position_changes(self):
@@ -102,7 +99,6 @@ class ClickableText(QGraphicsRectItem, Serializable):
         changed_pos = ([item for saved in self.my_selection_list
                         if (item.id == saved.id and item.scenePos() != saved.pos)
                         or (item.id == saved.id and item.rect() != saved.rect)])
-        # print([item.rect for item in self.my_selection_list])
         no_duplicate_items = set([item.id for item in changed_pos])
         if no_duplicate_items:
             self.communicate_new_position()
@@ -154,6 +150,7 @@ class ClickableText(QGraphicsRectItem, Serializable):
                                      int(self.rect().width()), int(self.rect().height()))
         self.content.setWidget(self.input_field)
 
+
     def serialize(self):
         return {
             'id': self.id,
@@ -175,6 +172,7 @@ class Resizer(QGraphicsObject):
     def __init__(self, parent, rect=QRectF(0, 0, 10, 10)):
         self.p = parent
         super().__init__(parent)
+        self.setZValue(2)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
@@ -202,7 +200,6 @@ class Resizer(QGraphicsObject):
         return value
 
     def mouseReleaseEvent(self, event):
-        print(self.p.start_memorize)
         self.p.memorize_mode_off()
         super(Resizer, self).mouseReleaseEvent(event)
 
@@ -220,7 +217,6 @@ class InputFields(QWidget):
             background-color: transparent;
         """
         self.setStyleSheet(style)
-
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 2, 0, 0)
         self.layout.addWidget(self.text_edit)
@@ -236,6 +232,9 @@ class TextEdit(QTextEdit):
     def __init__(self):
         super().__init__()
         self.setText('Add text')
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet('QTextEdit {background: transparent}')
+
         self.font_selection = QAction('Font')
         self.font_selection.triggered.connect(self.font_dialog)
         self.color_selection = QAction('Text Color')
@@ -252,13 +251,12 @@ class TextEdit(QTextEdit):
 
     def font_dialog(self):
         # qfont takes passed string from widget as first argument
-        font, ok = QFontDialog.getFont(self.font(), self)
+        font, ok = QFontDialog.getFont(self.font())
         cur: QTextCursor = self.textCursor()
         if ok:
             format_obj = QTextCharFormat()
             format_obj.setFont(font)
             cur.setCharFormat(format_obj)
-            print(self.currentCharFormat().font().toString())
 
     def color_dialog(self):
         color = QColorDialog.getColor()

@@ -1,17 +1,20 @@
-import json
 import logging
-import os
+try:
+    import cv2
+    import json
+    import os
+    import numpy as np
+    from PyQt5.QtGui import QPainter
+    from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+    from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout
 
-from PyQt5.QtGui import QPainter
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog, QVBoxLayout
-from threading import Thread
-import cv2
-
-from power_editor.image_scene import MainCanvas, Collector
-from interface_setup.interface import Interface
-from power_editor.main_view import MainView
-from toplevel.pdf_dialog import PdfOpener
+    from power_editor.image_scene import MainCanvas, Collector
+    from interface_setup.interface import Interface
+    from power_editor.main_view import MainView
+    from toplevel.pdf_dialog import PdfOpener
+except Exception as e:
+    logging.basicConfig(filename="log.txt")
+    logging.exception(e)
 
 
 class Controller:
@@ -19,6 +22,7 @@ class Controller:
 
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
+        print(cv2.__file__)
 
     def main(self):
         self.interface.main()
@@ -58,6 +62,10 @@ class Controller:
                                                     f"Image Files({format_to_use})")
         if file_name:
             str_path = file_name[0]
+            self.interface.menu_image.setEnabled(True)
+            self.interface.toolbar.setEnabled(True)
+
+            print(str_path)
             dial = PdfOpener(str_path)
             if open_pdf:
                 dial.build_dialog()
@@ -67,7 +75,8 @@ class Controller:
                 str_path = dial.pdf_path
             if clickable_p:
                 return self.scene.convert_qimage_clean(str_path)
-            image = cv2.imread(str_path)
+            image = cv2.imdecode(np.fromfile(str_path, np.uint8), cv2.IMREAD_UNCHANGED)
+
             self.scene.load_new_image(image)
 
     def save_the_image(self):
@@ -122,6 +131,8 @@ class Controller:
         file_name, _ = QFileDialog.getOpenFileNames(self.interface, 'Open File', os.path.abspath(__name__),
                                                     "Saved Files(*.json)")
         if file_name:
+            self.interface.menu_image.setEnabled(True)
+            self.interface.toolbar.setEnabled(True)
             with open(file_name[0], 'r') as file:
                 raw_data = json.loads(file.read())
                 self.scene.deserialize(raw_data)
@@ -130,10 +141,6 @@ class Controller:
         self.scene.clickable_image.create_on_click()
 
     def transform_image(self, rules: dict):
-        thread = Thread(target=self.transform_in_thread, args=(rules,))
-        thread.run()
-
-    def transform_in_thread(self, rules: dict):
         self.scene.send_transformation(rules)
 
     def open_brightness_control(self):
@@ -141,7 +148,6 @@ class Controller:
 
     def make_image_grey(self):
         self.scene.editor.turn_to_greyscale()
-        self.scene.memorize_image_change()
 
     def undo(self):
         self.scene.undo_redo_action(forward=False)
@@ -150,13 +156,12 @@ class Controller:
         self.scene.undo_redo_action(forward=True)
 
     def author(self):
-        QMessageBox.information(self.interface, 'About me', 'Если вы это читаете, значит вы купили мою программу или я вам ее подарил. :P\nПожелания и комментарии: vadim.freelance.projects@gmail.com', QMessageBox.Ok)
+        QMessageBox.information(self.interface, 'About me', 'Если вы это читаете, значит вы купили мою программу или я вам ее подарил. :P\nПожелания и комментарии: vadim.freelance.projects@gmail.com\nДеньги на еду: qiwi.com/n/VCODES', QMessageBox.Ok)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename="mylog.log")
     try:
         app = Controller()
         app.main()
     except Exception as e:
-        logging.error(e)
+        logging.exception(e)

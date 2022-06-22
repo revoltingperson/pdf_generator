@@ -3,13 +3,14 @@ from icons import new
 from pathlib import Path
 from PyQt5 import uic
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QDesktopWidget, QToolBar, QMenu
 
 
 class Interface(QMainWindow):
     def __init__(self, controller):
-        from power_editor.main_controller import Controller
+        from power_editor.pdf_generator import Controller
         self.app = QApplication(sys.argv)
+        self.app.setStyle('Fusion')
         super().__init__()
         self.controller: Controller = controller
         path = Path.cwd().parent.joinpath('ui', 'interface_v3.ui')
@@ -73,6 +74,10 @@ class Interface(QMainWindow):
         self.impose_image.triggered.connect(self.controller.open_imposed_picture)
         greyscale = self.findChild(QAction, 'Grey_filter')
         greyscale.triggered.connect(self.controller.make_image_grey)
+        self.toolbar = self.findChild(QToolBar, 'toolBar')
+        self.toolbar.setEnabled(False)
+        self.menu_image = self.findChild(QMenu, 'menuImage')
+        self.menu_image.setEnabled(False)
 
     def __place_app_window_at_screencenter(self):
         desktop = QDesktopWidget().screenGeometry()
