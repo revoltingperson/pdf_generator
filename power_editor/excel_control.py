@@ -13,8 +13,7 @@ class ExcelItem(ClickableText):
 
     def __init__(self, position, rect=QRectF(0, 0, width_inner, height_inner)):
         super().__init__(position, rect, extend_paint=True)
-        self.input_field.text_edit.setText('Your Excel text will look like this'
-                                           '\ndouble click me to open!')
+        self.input_field.text_edit.setText('Your Excel text goes here')
         self.input_field.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
         self.input_field.text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.excel_window = ExcelWindow()

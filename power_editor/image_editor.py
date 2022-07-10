@@ -103,13 +103,13 @@ class ImageEditor:
 
     def change_brightness(self, in_img, value):
         if not self.is_mask_none():
-            hsv = self.cv2.cvtColor(in_img, self.cv2.COLOR_BGR2HSV)
-            h, s, v = self.cv2.split(hsv)
+            hsv = cv2.cvtColor(in_img, cv2.COLOR_BGR2HSV)
+            h, s, v = cv2.split(hsv)
             lim = 255 - value
             v[v > lim] = 255
             v[v <= lim] += value
-            final_hsv = self.cv2.merge((h, s, v))
-            img = self.cv2.cvtColor(final_hsv, self.cv2.COLOR_HSV2BGR)
+            final_hsv = cv2.merge((h, s, v))
+            img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
             return img
 
     def output_image_as_pixmap(self, img):
@@ -122,7 +122,7 @@ class ImageEditor:
 
             table = np.array([((i / 255.0) ** gamma) * 255
                               for i in np.arange(0, 256)]).astype("uint8")
-            image = self.cv2.LUT(in_img, table)
+            image = cv2.LUT(in_img, table)
             return image
 
     def turn_to_greyscale(self):
@@ -135,7 +135,7 @@ class ImageEditor:
 
     def apply_greyscale(self, img):
         if self.grey:
-            grey = self.cv2.cvtColor(img, self.cv2.COLOR_RGB2GRAY)
+            grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             return grey
         return img
 
@@ -143,7 +143,7 @@ class ImageEditor:
         if not self.is_mask_none():
             if val < 1:
                 val = 1
-            blur = self.cv2.blur(in_img, (val, val))
+            blur = cv2.blur(in_img, (val, val))
             return blur
 
     def set_all_filters(self, force_memory_mode=False):

@@ -21,9 +21,6 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsSceneMouseEv
 from serializer.serializer import Serializable
 
 
-debug = False
-
-
 class MainCanvas(QGraphicsScene, Serializable):
     text_item: TextItem
     cropper: Cropper
@@ -113,7 +110,6 @@ class MainCanvas(QGraphicsScene, Serializable):
         scene_rect = QRectF(self.XY_ZERO, self.XY_ZERO, pixmap_to_show.width(), pixmap_to_show.height())
         self.black_back = scene_rect
         self.setSceneRect(scene_rect)
-        print(f'memory mode in mapping {self.editor.memory_mode}')
         if self.editor.memory_mode:
             self.memorize_change_on_scene()
         self.editor.memory_mode = True
@@ -233,7 +229,6 @@ class MainCanvas(QGraphicsScene, Serializable):
         history_stamp: HistoryStamp = self.history.retrieve_stamp()
         if history_stamp:
             self.clear()
-            print(f"current stamp{history_stamp.identifier, history_stamp.editor['last_angle']}")
             self.editor.__dict__ = dict(history_stamp.editor)
             self.editor.memory_mode = False
             self.merge_pixmap_and_cv2(self.editor.color_mask)

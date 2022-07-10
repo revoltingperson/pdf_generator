@@ -1,6 +1,4 @@
-from PyQt5.QtGui import QPixmap
 from dataclasses import dataclass, field
-import pprint
 from itertools import count
 from types import MappingProxyType
 from power_editor.image_editor import ImageEditor
@@ -34,9 +32,6 @@ class HistoryStack:
         self.__clear_irrelevant_history()
         self.__history_stack.append(new_stamp)
         self.__refresh_current_step()
-        pp = pprint.PrettyPrinter(indent=4)
-        print(f'all stack : {pp.pprint([(item.identifier, item.editor["last_angle"], item.editor["id"]) for item in self.__history_stack])}')
-        print(f'current step {self._current_step} len {len(self.__history_stack)}')
 
     def clear_history(self):
         self.__history_stack.clear()
@@ -70,7 +65,6 @@ class HistoryStack:
         if self.__history_stack:
             self._current_step -= 1
             self.reassign_steps()
-            print(f'travelled back, current step: {self._current_step}')
             self.stack_empty = False
 
     def reassign_steps(self):

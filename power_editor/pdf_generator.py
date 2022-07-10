@@ -22,7 +22,6 @@ class Controller:
 
         self.interface = Interface(self)
         self.__set_working_background_to_work_with_graphics()
-        print(cv2.__file__)
 
     def main(self):
         self.interface.main()
@@ -65,7 +64,6 @@ class Controller:
             self.interface.menu_image.setEnabled(True)
             self.interface.toolbar.setEnabled(True)
 
-            print(str_path)
             dial = PdfOpener(str_path)
             if open_pdf:
                 dial.build_dialog()
@@ -102,7 +100,7 @@ class Controller:
             if pdf_generator:
                 for name in excel:
                     head, filename = os.path.split(printer.outputFileName())
-                    printer.setOutputFileName(os.path.join(head, name))
+                    printer.setOutputFileName(os.path.join(head, f'{name}.pdf'))
                     self.scene.excel.insert_with_right_format(name)
                     self.finish_print(printer)
             else:
